@@ -1,0 +1,33 @@
+productimporter:
+    path: productimporter
+    methods: [GET]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:indexAction'
+
+productimporter-config:
+    path: productimporter/config
+    methods: [GET, POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:configAction'
+
+productimporter-categories:
+    path: productimporter/categories
+    methods: [GET, POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesAction'
+
+productimporter-categories-link:
+    path: productimporter/categories/link
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionLink'
+
+# Category CRUD
+
+# Delete
+
+productimporter-categories-delete:
+    path: productimporter/categories/delete
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionDelete'

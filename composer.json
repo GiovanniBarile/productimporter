@@ -1,0 +1,13 @@
+{
+    "name": "gbarile/productimporter",
+    "description": "A controller that imports products",
+    "autoload": {
+        "psr-4": {
+            "ProductImporter\\":  "src/"
+        }
+    },
+    "config": {
+        "prepend-autoloader": false
+    },
+    "type": "prestashop-module"
+}
