@@ -85,8 +85,17 @@ class ProductImporter extends Module{
         
         $this->context->controller->addJS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js');
         $this->context->controller->addCSS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css');
+        //add fontawesome 
+        $this->context->controller->addCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css');
+        // <script type="module" src="node_modules/spin.js/spin.js"></script>
+        // $this->context->controller->addJS($this->_path.'node_modules/spin.js/spin.js');
+        // $this->context->controller->addJS($this->_path.'node_modules/sweetalert2/dist/sweetalert2.min.js');
+        //sweet alert
+        // <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        $this->context->controller->addJS('https://cdn.jsdelivr.net/npm/sweetalert2@11');
         $this->context->controller->addJS($this->_path.'views/js/script.js');
         $this->context->controller->addJS($this->_path.'views/js/crud.js');
+        $this->context->controller->addJS($this->_path.'views/js/category_actions.js');
     }
 
     // install db 
