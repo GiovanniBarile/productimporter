@@ -1,5 +1,7 @@
 <?php
 
+use Svg\Tag\Path;
+
 if(!defined('_PS_VERSION_')){
     exit;
 }
@@ -43,7 +45,7 @@ class ProductImporter extends Module{
         }
 
         //register hook
-        if(!$this->registerHook('displayHeader') || !$this->registerHook('displayBackOfficeHeader')){
+        if(!$this->registerHook('displayBackOfficeHeader')){
             return false;
         }
 
@@ -65,16 +67,26 @@ class ProductImporter extends Module{
     public function getContent(){
         $output = ''; 
 
+        if(Tools::isSubmit('submit'.$this->name)){
+            $myModuleName = strval(Tools::getValue('MYMODULE_NAME'));
+            if(!$myModuleName || empty($myModuleName) || !Validate::isGenericName($myModuleName)){
+                $output .= $this->displayError($this->l('Invalid Configuration value'));
+            }else{
+                Configuration::updateValue('MYMODULE_NAME', $myModuleName);
+                $output .= $this->displayConfirmation($this->l('Settings updated'));
+            }
+        }
+
     }
 
     
     //displaybackofficeheader
     public function hookDisplayBackOfficeHeader(){
         
-        // $this->context->controller->registerJavascript('productimporter', '@Modules/productimporter/script.js', ['position' => 'bottom', 'priority' => 150]);
         $this->context->controller->addJS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js');
         $this->context->controller->addCSS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css');
-        $this->context->controller->addJS($this->_path.'script.js');
+        $this->context->controller->addJS($this->_path.'views/js/script.js');
+        $this->context->controller->addJS($this->_path.'views/js/crud.js');
     }
 
     // install db 

@@ -31,3 +31,32 @@ productimporter-categories-delete:
     methods: [POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionDelete'
+
+
+# Create category modal - Get parent categories 
+
+productimporter-categories-get-parents:
+    path: productimporter/categories/get-parents
+    methods: [GET]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionGetParents'
+    options:
+        expose: true
+
+# Create category modal - Create category
+productimporter-categories-add:
+    path: productimporter/categories/add
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionCreate'
+    options:
+        expose: true
+
+# Edit category modal - Edit category
+productimporter-categories-edit:
+    path: productimporter/categories/edit
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\CategoriesController:categoriesActionEdit'
+    options:
+        expose: true

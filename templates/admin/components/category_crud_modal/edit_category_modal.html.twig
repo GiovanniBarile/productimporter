@@ -1,0 +1,32 @@
+{% block content %}
+
+<div class="modal fade" id="editCategoryModal" tabindex="-1" role="dialog" aria-hidden="true" data-edit-category-url="{{ path('productimporter-categories-edit') }}">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-label">Modifica categoria</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <div class="form-group">
+                        <label for="oldCategoryName">Nome categoria esistente</label>
+                        <input type="text" class="form-control" id="oldCategoryName" name="oldCategoryName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="newCategoryName">Nuovo nome della categoria</label>
+                        <input type="text" class="form-control" id="newCategoryName" name="new_category_name">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+                <button type="button" disabled class="btn btn-primary" id="saveEditedCategory" >Salva</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
