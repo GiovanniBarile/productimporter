@@ -1,4 +1,5 @@
 $(document).ready(function () {
+
     $('#local').jstree({
         "plugins": [
             "contextmenu", "search", "wholerow"
@@ -24,7 +25,7 @@ $(document).ready(function () {
                     if (deleteConfirmation) {
                         // send ajax request to controller
                         $.ajax({
-                            url: '{{ path(productimporter-categories-delete) }}',
+                            url: productimporter['deleteCategoryUrl'],
                             type: 'POST',
                             data: {
                                 category_id: node.data.categoryId
@@ -50,7 +51,17 @@ $(document).ready(function () {
 
 
     $('#local').on("changed.jstree", function (e, data) {
+        //if disabled enable edit button
+        var categoryId = data.instance.get_node(data.selected[0]).data.categoryId;
+        var categoryName = data.instance.get_node(data.selected[0]).text;
+        
+        $('#editCategoryButton').prop('disabled', false);
+        //add category id and name to edit button data
+        $('#editCategoryButton').attr('data-category-id', categoryId);
+        $('#editCategoryButton').attr('data-category-name', categoryName);
+        
         var selectedCategory = data.instance.get_node(data.selected[0]).text + ' (id: ' + data.instance.get_node(data.selected[0]).data.categoryId + ')';
+       
         $('#selectedCategory').html(selectedCategory);
     });
 

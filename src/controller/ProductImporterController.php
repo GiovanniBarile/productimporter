@@ -9,7 +9,7 @@ use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use ProductImporter\Entity\CategoryMapping;
 use ProductImporter\Forms\ConfigType;
 use Symfony\Component\HttpFoundation\Request;
-use Doctrine\DBAL\Connection;
+
 
 class ProductImporterController extends FrameworkBundleAdminController
 {
@@ -191,8 +191,56 @@ class ProductImporterController extends FrameworkBundleAdminController
         ]);
     }
 
+    // ActionCreate
+    public function categoriesActionCreate(Request $request)
+    {
+        $category_name = $request->get('categoryName');
+        $parent_id = $request->get('parentCategory');
+    
+        // create a new category array
+
+        try {
+            $category = new Category();
+            $category->name = array((int)Configuration::get('PS_LANG_DEFAULT') => $category_name);
+            $category->link_rewrite = array((int)Configuration::get('PS_LANG_DEFAULT') => $category_name);
+            $category->id_parent = $parent_id;
+            $category->active = true;
+            $category->add();
 
 
+
+
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Failed to create category ' . $e->getMessage(),
+            ]);
+        }
+    
+        return $this->json([
+            'success' => true,
+            'message' => 'Category created successfully',
+        ]);
+    }
+    
+    public function categoriesActionGetParents()
+    {
+        // Recupera un elenco di tutte le categorie
+        $categories = Category::getCategories(null, true, false);
+
+        $categoryList = [];
+        foreach ($categories as $category) {
+            $categoryList[] = [
+                'id' => $category['id_category'],
+                'name' => $category['name'],
+            ];
+        }
+
+        return $this->json([
+            'success' => true,
+            'categories' => $categoryList,
+        ]);
+    }
 
     public function saveConfig($key, $data)
     {
@@ -205,7 +253,4 @@ class ProductImporterController extends FrameworkBundleAdminController
         $config = Configuration::get($key);
         return $config;
     }
-
-
-    
 }
