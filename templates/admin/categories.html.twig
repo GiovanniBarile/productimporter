@@ -1,26 +1,32 @@
 {% extends "@PrestaShop/Admin/layout.html.twig" %}
+
 {% block content %}
-
-	<div class=" d-flex justify-content-around">
-
-		<div class="overflow-auto" style="height:70vh">
-			<h1>Remote Categories</h1>
-
-			<div id="remote" class="demo">
+	<div class="d-flex justify-content-between">
+		<div class="w-50 overflow-auto pr-2">
+				<input type="textarea" class="form-control" id="remoteCategoryName" readonly>
+			<div class="d-flex justify-content-between mb-3 flex-column mt-4">
+				<h1 class="m-0 p-0">Remote Categories</h1>
+			</div>
+			<div id="remote" class="demo" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
 				<ul>
-					{% for parent in remote_categories %}
-						<li data-jstree='{"opened":true}' data-category-id="{{parent.id}}">
-							{{ parent.name }}
-							{% if parent.x_children|length > 0 %}
+					{% for remoteCategory in remote_categories %}
+						<li data-jstree='{"opened": true}' data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}">
+							<span>
+								{{ remoteCategory.name }}
+								{{ remoteCategory.x_mapped ? '✔️' : '' }}
+							</span>
+							{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 								<ul>
-									{% for child in parent.x_children %}
-										<li data-category-id="{{child.id}}">
-											{{ child.name }}
-											{% if child.x_children is defined %}
+									{% for remoteChildCategory in remoteCategory.x_children %}
+										<li data-category-id="{{ remoteChildCategory.id }}" data-jstree='{"opened": true}' data-mapped="{{ remoteChildCategory.x_mapped }}">
+											{{ remoteChildCategory.name }}
+											{{ remoteChildCategory.x_mapped ? '✔️' : '' }}
+											{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
 												<ul>
-													{% for child2 in child.x_children %}
-														<li data-category-id="{{child2.id}}">
-															{{ child2.name }}
+													{% for remoteChild2 in remoteChildCategory.x_children %}
+														<li data-category-id="{{ remoteChild2.id }}" data-jstree='' data-mapped="{{ remoteChild2.x_mapped }}">
+															{{ remoteChild2.name }}
+															{{ remoteChild2.x_mapped ? '✔️' : '' }}
 														</li>
 													{% endfor %}
 												</ul>
@@ -33,50 +39,43 @@
 					{% endfor %}
 				</ul>
 			</div>
+		</div>
+
+		<div class="w-50 overflow-auto pl-2">
+
+        <div class="d-flex justify-content-between mb-3 flex-column">
+            <input type="textarea" class="form-control" id="localCategoryName" readonly>
+            <div class="d-flex justify-content-between mt-4">
+                <h1 class="m-0 p-0">Local Categories</h1>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal">
+                    <i class="material-icons">add</i>
+                </button>
+            </div>
+        </div>
 
 
-			{# div with selected category name #}
-			<div class="mt-5">
-				<p>Selected category:</p>
-				<div id="selectedRemoteCategory"></div>
-			</div>
-		</div>
-		<div class="centercol w-10">
-			<button id="btn" class="btn btn-primary">Collega</button>
-		</div>
-		<div>
-			<div class="d-flex justify-content-around align-items-center align-content-center">
-				<span class="h1 m-0 p-0">Local Categories</span>
-				<button type="button" class="btn btn-action btn-sm ml-4" data-toggle="modal" data-target="#addCategoryModal">
-					<i class="material-icons">add</i>
-				</button>
-				<button type="button" disabled class="btn btn-action btn-sm ml-4" id="editCategoryButton" data-toggle="modal" data-target="#editCategoryModal" data-category-id="" data-category-name="">
-					<i class="material-icons">edit</i>
-				</button>
-			</div>
-			<div id="local" class="demo">
+			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}">
 				<ul>
-					{% for parent in categories %}
-						<li data-jstree='{"opened":true}' data-category-id="{{ parent.id_category }}">
-							{{ parent.name }}
-
-							{% if parent.children|length > 0 %}
+					{% for localCategory in categories %}
+						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}">
+							{{ localCategory.name }}
+							{{ localCategory.x_mapped ? '✔️' : '' }}
+							{% if localCategory.children is defined and localCategory.children|length > 0 %}
 								<ul>
-									{% for child in parent.children %}
-										<li data-category-id="{{ child.id_category }}" data-jstree='{"opened":true}'>
-											{{ child.name }}
-
-
-											{% if child.children is defined %}
+									{% for localChildCategory in localCategory.children %}
+										<li data-category-id="{{ localChildCategory.id_category }}" data-jstree='{"opened": true}' data-mapped="{{ localChildCategory.x_mapped }}">
+											{{ localChildCategory.name }}
+											{{ localChildCategory.x_mapped ? '✔️' : '' }}
+											{% if localChildCategory.children is defined and localChildCategory.children|length > 0 %}
 												<ul>
-													{% for child2 in child.children %}
-														<li data-jstree='{"opened":true}' data-category-id="{{ child2.id_category }}">
-															{{ child2.name }}
+													{% for localChild2 in localChildCategory.children %}
+														<li data-jstree='{"opened": true}' data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}">
+															{{ localChild2.name }}
+															{{ localChild2.x_mapped ? '✔️' : '' }}
 														</li>
 													{% endfor %}
 												</ul>
 											{% endif %}
-
 										</li>
 									{% endfor %}
 								</ul>
@@ -84,13 +83,22 @@
 						</li>
 					{% endfor %}
 				</ul>
+			</div>
+		</div>
+	</div>
 
-			</div>
-			<div class="mt-5">
-				<p>Selected category:
-				</p>
-				<div id="selectedCategory"></div>
-			</div>
+	<div class="mt-5">
+		<p>Selected category:</p>
+		<div id="selectedCategory"></div>
+	</div>
+
+	{# Include category CRUD modals here #}
+
+	{# Loading overlay #}
+	<div id="loading" class="position-fixed d-none" style="top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; pointer-events: all;">
+		<div style="background-color: white; padding: 20px; border-radius: 10px; text-align: center;">
+			<div class="spinner-border text-primary" role="status"></div>
+			<p style="margin-top: 10px; font-weight: bold; color: #333;">Caricamento...</p>
 		</div>
 	</div>
 

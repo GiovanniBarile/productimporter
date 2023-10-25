@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "jstree": "^3.3.16"
+    "jstree": "^3.3.16",
+    "spin.js": "^4.1.1",
+    "sweetalert2": "^11.7.32"
   }
 }

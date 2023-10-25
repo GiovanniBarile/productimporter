@@ -21,20 +21,18 @@ productimporter-categories-link:
     methods: [POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionLink'
+    
 
-# Category CRUD
+# START Category CRUD
 
 # Delete
-
 productimporter-categories-delete:
     path: productimporter/categories/delete
     methods: [POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionDelete'
 
-
 # Create category modal - Get parent categories 
-
 productimporter-categories-get-parents:
     path: productimporter/categories/get-parents
     methods: [GET]
@@ -48,7 +46,7 @@ productimporter-categories-add:
     path: productimporter/categories/add
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionCreate'
+      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionCreate'
     options:
         expose: true
 
@@ -57,6 +55,26 @@ productimporter-categories-edit:
     path: productimporter/categories/edit
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\CategoriesController:categoriesActionEdit'
+      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionEdit'
     options:
         expose: true
+
+# END Category CRUD
+
+
+# START Category mapping operations
+
+# Get local mapped categories
+productimporter-get-local-mapped-categories:
+    path: productimporter/categories/local-mapped
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionGetLocalMapped'
+
+# Get remote mapped categories
+productimporter-get-remote-mapped-categories:
+    path: productimporter/categories/remote-mapped
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionGetRemoteMapped'
+

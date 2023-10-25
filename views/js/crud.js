@@ -36,18 +36,12 @@ $(document).ready(function () {
 
 
     $('#editCategoryModal').on('show.bs.modal', function (event) {
-        //get the get-parents-url from modal div
-        // var url = $('#editCategoryModal').data('get-parents-url');
-        var data = $(event.relatedTarget);
-        let oldCategory = data.data('category-name').trim();
-        let categoryId = data.data('category-id');
         var modal = $(this);
-        let url = modal.data('edit-category-url');
-        modal.find('#oldCategoryName').val(oldCategory);
-        let newCategoryName = modal.find('#newCategoryName');
         let saveButton = modal.find('#saveEditedCategory');
-        saveButton.attr('data-category-id', categoryId);
-
+        let oldCategory = modal.find('#oldCategoryName').val();
+        let categoryId = modal.find('#saveEditedCategory').data('category-id');
+        let url = modal.data('edit-category-url');
+        let newCategoryName = modal.find('#newCategoryName');
         //ad event listener to new category name input
         newCategoryName.on('input', function (e) {
             if (newCategoryName.val() != '' && newCategoryName.val() != oldCategory) {
@@ -56,7 +50,6 @@ $(document).ready(function () {
                 saveButton.prop('disabled', true);
             }
         });
-
         // save button
         saveButton.click(function () {
             var form = $('#editCategoryForm');
@@ -71,6 +64,7 @@ $(document).ready(function () {
             });
         });
     }
-    );
 
+
+    );
 });
