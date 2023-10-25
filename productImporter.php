@@ -1,13 +1,13 @@
 <?php
 
-use Svg\Tag\Path;
 
-if(!defined('_PS_VERSION_')){
+if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 
-class ProductImporter extends Module{
+class ProductImporter extends Module
+{
 
     public function __construct()
     {
@@ -29,23 +29,22 @@ class ProductImporter extends Module{
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
-        if(!Configuration::get('MYMODULE_NAME')){
+        if (!Configuration::get('MYMODULE_NAME')) {
             $this->warning = $this->l('No name provided');
         }
-        
     }
     //load js 
-    
-    
+
+
 
     public function install()
     {
-        if(!parent::install() || !$this->installDb()){
+        if (!parent::install() || !$this->installDb()) {
             return false;
         }
 
         //register hook
-        if(!$this->registerHook('displayBackOfficeHeader')){
+        if (!$this->registerHook('displayBackOfficeHeader')) {
             return false;
         }
 
@@ -56,7 +55,7 @@ class ProductImporter extends Module{
 
     public function uninstall()
     {
-        if(!parent::uninstall() || !Configuration::deleteByName('MYMODULE_NAME') || !$this->uninstallDb()){
+        if (!parent::uninstall() || !Configuration::deleteByName('MYMODULE_NAME') || !$this->uninstallDb()) {
             return false;
         }
 
@@ -64,46 +63,45 @@ class ProductImporter extends Module{
     }
 
 
-    public function getContent(){
-        $output = ''; 
+    public function getContent()
+    {
+        $output = '';
 
-        if(Tools::isSubmit('submit'.$this->name)){
+        if (Tools::isSubmit('submit' . $this->name)) {
             $myModuleName = strval(Tools::getValue('MYMODULE_NAME'));
-            if(!$myModuleName || empty($myModuleName) || !Validate::isGenericName($myModuleName)){
+            if (!$myModuleName || empty($myModuleName) || !Validate::isGenericName($myModuleName)) {
                 $output .= $this->displayError($this->l('Invalid Configuration value'));
-            }else{
+            } else {
                 Configuration::updateValue('MYMODULE_NAME', $myModuleName);
                 $output .= $this->displayConfirmation($this->l('Settings updated'));
             }
         }
-
     }
 
-    
+
     //displaybackofficeheader
-    public function hookDisplayBackOfficeHeader(){
-        
+    public function hookDisplayBackOfficeHeader()
+    {
+
+        //jsTree
         $this->context->controller->addJS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js');
         $this->context->controller->addCSS('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css');
-        //add fontawesome 
+
+        //Fontawesome 
         $this->context->controller->addCSS('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css');
-        // <script type="module" src="node_modules/spin.js/spin.js"></script>
-        // $this->context->controller->addJS($this->_path.'node_modules/spin.js/spin.js');
-        // $this->context->controller->addJS($this->_path.'node_modules/sweetalert2/dist/sweetalert2.min.js');
-        //sweet alert
-        // <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        //SweetAlert2
         $this->context->controller->addJS('https://cdn.jsdelivr.net/npm/sweetalert2@11');
-        $this->context->controller->addJS($this->_path.'views/js/script.js');
-        $this->context->controller->addJS($this->_path.'views/js/crud.js');
-        $this->context->controller->addJS($this->_path.'views/js/category_actions.js');
+
+        //custom JS
+        $this->context->controller->addJS($this->_path . 'views/js/script.js');
+        $this->context->controller->addJS($this->_path . 'views/js/crud.js');
     }
 
     // install db 
     // CREATE TABLE ps_category_mapping (id INT AUTO_INCREMENT NOT NULL, id_local_category INT NOT NULL, id_remote_category INT NOT NULL, local_category_name VARCHAR(64) NOT NULL, remote_category_name VARCHAR(64) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
-
-
-    public function installDb(){
-        $sql = "CREATE TABLE IF NOT EXISTS `"._DB_PREFIX_."category_mapping` (
+    public function installDb()
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "category_mapping` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
             `id_local_category` int(11) NOT NULL,
             `id_remote_category` int(11) NOT NULL,
@@ -113,11 +111,9 @@ class ProductImporter extends Module{
         return Db::getInstance()->execute($sql);
     }
 
-    public function uninstallDb(){
-        $sql = "DROP TABLE IF EXISTS `"._DB_PREFIX_."category_mapping`";
+    public function uninstallDb()
+    {
+        $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`";
         return Db::getInstance()->execute($sql);
     }
-
-
 }
-

@@ -48,19 +48,31 @@ class ProductImporterController extends FrameworkBundleAdminController
     {
         $existing_categories = Category::getNestedCategories();
         $remote_categories = $this->orderRemoteCategories();
+    
+        // get all local mapped categories 
+        $sql = "SELECT `id_local_category` FROM ps_category_mapping GROUP BY id_local_category";
+        $mapped_local_categories = Db::getInstance()->executeS($sql);
+        $mapped_local_categories = array_column($mapped_local_categories, 'id_local_category');
 
-        $sql = "SELECT `id_local_category` FROM ps_category_mapping WHERE id_local_category in (SELECT id_category FROM ps_category_lang WHERE id_shop = 1 AND id_lang = 1) GROUP BY id_local_category";
-
-        $result = Db::getInstance()->executeS($sql);
-
-        // dd($result);
-
-
+       // Define a recursive function to mark categories
+        function markMappedCategories(&$categories, $mapped_local_categories) {
+            foreach ($categories as &$category) {
+                $category['x_mapped'] = in_array($category['id_category'], $mapped_local_categories);
+                if (isset($category['children'])) {
+                    markMappedCategories($category['children'], $mapped_local_categories);
+                }
+            }
+        }
+    
+        // Call the recursive function to mark categories
+        markMappedCategories($existing_categories, $mapped_local_categories);
+    
         return $this->render('@Modules/productimporter/templates/admin/categories.html.twig', [
             'categories' => $existing_categories,
             'remote_categories' => $remote_categories,
         ]);
     }
+    
 
     public function categoriesActionLink(Request $request)
     {
@@ -69,6 +81,20 @@ class ProductImporterController extends FrameworkBundleAdminController
 
         $em = $this->getDoctrine()->getManager();
 
+        //check if local category is already mapped to something 
+        $existingMapping = $em->getRepository(CategoryMapping::class)->findBy
+        ([
+            'idLocalCategory' => $selectedLocalCategoryIds[0],
+        ]); 
+
+
+        if ($existingMapping) {
+            //if local category is already mapped to remote category, delete the mapping
+            foreach ($existingMapping as $mapping) {
+                $em->remove($mapping);
+            }
+            $em->flush();
+        }
 
         foreach ($selectedRemoteCategoryIds as $remoteCategory) {
             // Verifica se il collegamento esiste già
@@ -76,6 +102,9 @@ class ProductImporterController extends FrameworkBundleAdminController
                 'idLocalCategory' => $selectedLocalCategoryIds[0],
                 'idRemoteCategory' => $remoteCategory,
             ]);
+
+            //if local category is already mapped to remote category, delete the mapping
+
 
             if (!$existingMapping) {
                 // Se non esiste, crea e persisti il collegamento
@@ -120,13 +149,21 @@ class ProductImporterController extends FrameworkBundleAdminController
 
 
     public function orderRemoteCategories()
-    {
+    {   
+        $sql = "SELECT `id_remote_category` FROM ps_category_mapping GROUP BY id_remote_category";
+        $mapped_local_categories = Db::getInstance()->executeS($sql);
+        $mapped_local_categories = array_column($mapped_local_categories, 'id_remote_category');
         $categories = $this->getRemoteCategories();
         $final_categories = [];
-        foreach ($categories as $category) {
 
+        foreach ($categories as $category) {
             if (!isset($category['parent'])) {
-                $category['x_children'] = $this->getChildren($category['id'], $categories);
+                $category['x_children'] = $this->getChildren($category['id'], $categories, $mapped_local_categories);
+                if (in_array($category['id'], $mapped_local_categories)) {
+                    $category['x_mapped'] = true;
+                } else {
+                    $category['x_mapped'] = false;
+                }
                 $final_categories[] = $category;
             }
         }
@@ -137,7 +174,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         return $final_categories;
     }
 
-    public function getChildren($id, $categories)
+    public function getChildren($id, $categories, $mapped_local_categories)
     {
 
         $children = [];
@@ -145,7 +182,12 @@ class ProductImporterController extends FrameworkBundleAdminController
         foreach ($categories as $category) {
 
             if (isset($category['parent']) && $category['parent'] == $id) {
-                $category['x_children'] = $this->getChildren($category['id'], $categories);
+                $category['x_children'] = $this->getChildren($category['id'], $categories, $mapped_local_categories);
+                if (in_array($category['id'], $mapped_local_categories)) {
+                    $category['x_mapped'] = true;
+                } else {
+                    $category['x_mapped'] = false;
+                }
                 $children[] = $category;
             }
         }
@@ -191,38 +233,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         ]);
     }
 
-    // ActionCreate
-    public function categoriesActionCreate(Request $request)
-    {
-        $category_name = $request->get('categoryName');
-        $parent_id = $request->get('parentCategory');
-    
-        // create a new category array
 
-        try {
-            $category = new Category();
-            $category->name = array((int)Configuration::get('PS_LANG_DEFAULT') => $category_name);
-            $category->link_rewrite = array((int)Configuration::get('PS_LANG_DEFAULT') => $category_name);
-            $category->id_parent = $parent_id;
-            $category->active = true;
-            $category->add();
-
-
-
-
-        } catch (\Exception $e) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Failed to create category ' . $e->getMessage(),
-            ]);
-        }
-    
-        return $this->json([
-            'success' => true,
-            'message' => 'Category created successfully',
-        ]);
-    }
-    
     public function categoriesActionGetParents()
     {
         // Recupera un elenco di tutte le categorie
