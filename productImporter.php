@@ -9,6 +9,29 @@ if (!defined('_PS_VERSION_')) {
 class ProductImporter extends Module
 {
 
+    public $tabs = [
+        [
+            'name' => 'Product Importer',
+            'class_name' => 'AdminProductImporter',
+            'visible' => true,
+            'icon' => 'shopping_basket',
+            // 'parent_class_name' => 'AdminParentModulesSf', // Classe genitore per il sottomenu
+        ],
+        [
+            'name' => 'Settings',
+            'class_name' => 'AdminProductImporterSettings',
+            'visible' => true,
+            'parent_class_name' => 'AdminProductImporter', // Collega a 'AdminProductImporter'
+        ],
+        [
+            'name' => 'Manage categories',
+            'class_name' => 'AdminCategoryMapping',
+            'visible' => true,
+            'parent_class_name' => 'AdminProductImporter', // Collega a 'AdminProductImporter'
+        ],
+
+    ];
+    
     public function __construct()
     {
         $this->name = 'productimporter';
@@ -20,6 +43,17 @@ class ProductImporter extends Module
             'min' => '1.7',
             'max' => _PS_VERSION_
         ];
+
+        // $this->tabs = [
+        //     [
+        //         'name' => 'Product Importer',
+        //         'class_name' => 'AdminProductImporter',
+        //         'parent_class_name' => 'AdminParentModulesSf',
+        //         'visible' => true,
+        //         'icon' => 'import'
+        //     ]
+        // ];
+
         $this->bootstrap = true;
 
         parent::__construct();

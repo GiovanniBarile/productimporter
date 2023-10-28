@@ -3,18 +3,23 @@ productimporter:
     methods: [GET]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:indexAction'
-
+      _legacy_controller: 'AdminProductImporter'
+      _legacy_link: 'AdminProductImporter'
 productimporter-config:
     path: productimporter/config
     methods: [GET, POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:configAction'
+      _legacy_controller: 'AdminProductImporterSettings'
+      _legacy_link: 'AdminProductImporterSettings'
 
 productimporter-categories:
     path: productimporter/categories
     methods: [GET, POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:categoriesAction'
+      _legacy_controller: 'AdminCategoryMapping'
+      _legacy_link: 'AdminCategoryMapping'
 
 productimporter-categories-link:
     path: productimporter/categories/link
