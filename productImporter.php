@@ -65,18 +65,11 @@ class ProductImporter extends Module
 
     public function getContent()
     {
-        $output = '';
+        //must redirect to module controller  admin6411iq3kh196f8gyx32/modules/productimporter/config?_token=BcZ0l47G8DkY3DVFCbgjDtOIc27rB_XclL2HELcEIJg
+        Tools::redirectAdmin($this->context->link->getAdminLink('AdminProductImporter'));
+        
+    }   
 
-        if (Tools::isSubmit('submit' . $this->name)) {
-            $myModuleName = strval(Tools::getValue('MYMODULE_NAME'));
-            if (!$myModuleName || empty($myModuleName) || !Validate::isGenericName($myModuleName)) {
-                $output .= $this->displayError($this->l('Invalid Configuration value'));
-            } else {
-                Configuration::updateValue('MYMODULE_NAME', $myModuleName);
-                $output .= $this->displayConfirmation($this->l('Settings updated'));
-            }
-        }
-    }
 
 
     //displaybackofficeheader
@@ -92,6 +85,11 @@ class ProductImporter extends Module
         //SweetAlert2
         $this->context->controller->addJS('https://cdn.jsdelivr.net/npm/sweetalert2@11');
 
+        //bootstrap selectPicker 
+        
+        $this->context->controller->addCSS('https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css');
+        $this->context->controller->addJS('https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js');
+        
         //custom JS
         $this->context->controller->addJS($this->_path . 'views/js/script.js');
         $this->context->controller->addJS($this->_path . 'views/js/crud.js');

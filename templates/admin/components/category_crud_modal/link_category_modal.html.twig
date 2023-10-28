@@ -1,0 +1,76 @@
+{% block content %}
+
+	<div class="modal fade" id="linkCategoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modal-label">Collega categoria
+					</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="linkCategoryForm">
+						<div class="form-group">
+							<label for="selectedCategory">Categoria selezionata</label>
+							<input type="text" class="form-control" id="selectedCategory" name="selectedCategory" readonly>
+						</div>
+						<div class="form-group">
+							<label for="linkCategory">Collega categoria</label>
+
+							{# To link remote #}
+							<div id="linkCategoryRemote" class="d-none">
+
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" data-link-type="remote">
+									{% for remoteCategory in remote_categories %}
+										<optgroup label="{{ remoteCategory.name }}">
+											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
+												{% for remoteChildCategory in remoteCategory.x_children %}
+													<option value="{{ remoteChildCategory.id }}">{{ remoteChildCategory.name }}</option>
+													{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
+														{% for remoteChild2 in remoteChildCategory.x_children %}
+															<option value="{{ remoteChild2.id }}">{{ remoteChild2.name }}</option>
+														{% endfor %}
+													{% endif %}
+												{% endfor %}
+											{% endif %}
+										</optgroup>
+									{% endfor %}
+								</select>
+							</div>
+                                
+                                {# To link local #}
+
+							<div id="linkCategoryLocal" class="d-none">
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" data-link-type="remote">
+									{% for existing_category in categories %}
+										<optgroup label="{{ existing_category.name }}">
+											{% if existing_category.children is defined and existing_category.children|length > 0 %}
+												{% for childCategory in existing_category.children %}
+													<option value="{{ childCategory.id_category }}">{{ childCategory.name }}</option>
+													{% if childCategory.children is defined and childCategory.children|length > 0 %}
+														{% for localChild2 in childCategory.children %}
+															<option value="{{ localChild2.id_category }}">{{ localChild2.name }}</option>
+														{% endfor %}
+													{% endif %}
+												{% endfor %}
+											{% endif %}
+										</optgroup>
+									{% endfor %}
+								</select>
+							</div>
+
+
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+					<button type="button" disabled class="btn btn-primary" id="saveEditedCategory">Salva</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+{% endblock %}

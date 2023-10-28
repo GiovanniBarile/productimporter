@@ -12,7 +12,6 @@ const initializeJsTree = () => {
                 const mapped = node.data.mapped;
                 const categoryId = node.data.categoryId;
                 const items = {
-
                     getMappedCategories: {
                         label: 'Get mapped categories',
                         action: () => {
@@ -27,12 +26,7 @@ const initializeJsTree = () => {
                     linkCategory: {
                         label: 'Link category',
                         action: () => {
-                            $.ajax({
-                                url: linkCategoryUrl,
-                                type: 'POST',
-                                data: { category_id: categoryId },
-                                success: () => window.location.reload(),
-                            });
+                            handleLinkCategory(node);
                         },
                     },
 
@@ -75,15 +69,12 @@ const initializeJsTree = () => {
                     viewLinkedCategories: {
                         label: 'View linked categories',
                         action: () => {
-                            $.ajax({
-                                url: viewLinkedCategoriesUrl,
-                                type: 'POST',
-                                data: { category_id: categoryId },
-                                success: () => window.location.reload(),
-                            });
+                            handleLinkedCategories(node);
                         },
                     },
                 };
+
+                
                 if (mapped) {
                     delete items.linkCategory;
                 } else {
@@ -91,10 +82,66 @@ const initializeJsTree = () => {
                     delete items.unlinkCategory;
                     delete items.getMappedCategories;
                 }
+
+                //if node is remote root, delete edit and delete category
+                if (node.id.includes('j1')) {
+                    delete items.editCategory;
+                    delete items.deleteCategory;
+                }
+
+
+
                 return items;
             },
         },
     });
+};
+
+const handleLinkCategory = (node) => {
+
+    let categoryId = node.data.categoryId;
+
+    let nodeType = node.id.includes('j2') ? 'locale' : 'remota';
+    let modal = $('#linkCategoryModal');
+    modal.find('#modal-label').text(`Collega categoria ${nodeType}`);
+    modal.find('#selectedCategory').val(function () {
+        //foreach  selected node, get the text and append it to the input
+        if (nodeType === 'remota') {
+            let selectedNodes = $('#remote').jstree(true).get_selected(true);
+
+            let selectedCategories = [];
+            for (let i = 0; i < selectedNodes.length; i++) {
+                selectedCategories.push(selectedNodes[i].text.replace('✔️', '').trim());
+            }
+            return selectedCategories.join(', ');
+        }
+        else {
+            let selectedNodes = $('#local').jstree(true).get_selected(true);
+
+            let selectedCategories = [];
+
+            for (let i = 0; i < selectedNodes.length; i++) {
+                selectedCategories.push(selectedNodes[i].text.replace('✔️', '').trim());
+            }
+            return selectedCategories.join(', ');
+        }
+    }
+    );
+
+    if (nodeType === 'locale') {
+        //remove d-none class from local category input
+        modal.find('#linkCategoryRemote').removeClass('d-none');
+        //add d-none class to remote category input
+        modal.find('#linkCategoryLocal').addClass('d-none');
+    } else {
+        //remove d-none class from remote category input
+        modal.find('#linkCategoryLocal').removeClass('d-none');
+        //add d-none class to local category input
+        modal.find('#linkCategoryRemote').addClass('d-none');
+    }
+    modal.find('#selectedCategory').attr('data-category-id', categoryId);
+    $('#linkCategoryModal').modal('show');
+
 };
 
 const getMappedCategories = (url, tree, categoryId) => {

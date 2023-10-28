@@ -66,7 +66,9 @@ class ProductImporterController extends FrameworkBundleAdminController
     
         // Call the recursive function to mark categories
         markMappedCategories($existing_categories, $mapped_local_categories);
-    
+        
+        // dd($remote_categories);
+        // dd($existing_categories);
         return $this->render('@Modules/productimporter/templates/admin/categories.html.twig', [
             'categories' => $existing_categories,
             'remote_categories' => $remote_categories,
