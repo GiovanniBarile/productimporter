@@ -44,16 +44,6 @@ class ProductImporter extends Module
             'max' => _PS_VERSION_
         ];
 
-        // $this->tabs = [
-        //     [
-        //         'name' => 'Product Importer',
-        //         'class_name' => 'AdminProductImporter',
-        //         'parent_class_name' => 'AdminParentModulesSf',
-        //         'visible' => true,
-        //         'icon' => 'import'
-        //     ]
-        // ];
-
         $this->bootstrap = true;
 
         parent::__construct();
