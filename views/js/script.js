@@ -74,7 +74,7 @@ const initializeJsTree = () => {
                     },
                 };
 
-                
+
                 if (mapped) {
                     delete items.linkCategory;
                 } else {
@@ -98,11 +98,39 @@ const initializeJsTree = () => {
 };
 
 const handleLinkCategory = (node) => {
+    // Check if node is mapped, using '✔️' as check icon
+    if (node.text.includes('✔️')) {
+        // Ask if the user wants to continue, losing previous mapping
+        Swal.fire({
+            title: 'Sei sicuro?',
+            text: 'Sei sicuro di voler collegare la categoria? Le precedenti assegnazioni andranno perse',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            cancelButtonText: 'Annulla',
+            confirmButtonText: 'Continua!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // If the user confirms, continue
+                continueLinkCategory(node);
+            }
+        });
+    } else {
+        // If the node is not mapped, continue directly
+        continueLinkCategory(node);
+    }
+};
 
+const continueLinkCategory = (node) => {
     let categoryId = node.data.categoryId;
 
     let nodeType = node.id.includes('j2') ? 'locale' : 'remota';
     let modal = $('#linkCategoryModal');
+    //set data-category-type attribute to modal 
+    modal.attr('data-category-type', nodeType);
+    modal.attr('data-category-id', categoryId);
+
     modal.find('#modal-label').text(`Collega categoria ${nodeType}`);
     modal.find('#selectedCategory').val(function () {
         //foreach  selected node, get the text and append it to the input
@@ -139,7 +167,7 @@ const handleLinkCategory = (node) => {
         //add d-none class to local category input
         modal.find('#linkCategoryRemote').addClass('d-none');
     }
-    modal.find('#selectedCategory').attr('data-category-id', categoryId);
+
     $('#linkCategoryModal').modal('show');
 
 };

@@ -1,6 +1,10 @@
 {% block content %}
 
-	<div class="modal fade" id="linkCategoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal fade" id="linkCategoryModal" tabindex="-1" role="dialog" aria-hidden="true"
+	data-link-categories-url="{{ path('productimporter-categories-link')}}"
+	data-category-type=""
+	data-category-id=""
+	>
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -22,7 +26,7 @@
 							{# To link remote #}
 							<div id="linkCategoryRemote" class="d-none">
 
-								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" data-link-type="remote">
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="selectPicker">
 									{% for remoteCategory in remote_categories %}
 										<optgroup label="{{ remoteCategory.name }}">
 											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
@@ -39,11 +43,11 @@
 									{% endfor %}
 								</select>
 							</div>
-                                
-                                {# To link local #}
+
+							{# To link local #}
 
 							<div id="linkCategoryLocal" class="d-none">
-								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" data-link-type="remote">
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="selectPicker">
 									{% for existing_category in categories %}
 										<optgroup label="{{ existing_category.name }}">
 											{% if existing_category.children is defined and existing_category.children|length > 0 %}
@@ -67,7 +71,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
-					<button type="button" disabled class="btn btn-primary" id="saveEditedCategory">Salva</button>
+					<button type="button" disabled class="btn btn-primary" id="linkCategoryBtn">Salva</button>
 				</div>
 			</div>
 		</div>

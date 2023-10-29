@@ -117,6 +117,7 @@ class ProductImporter extends Module
         //custom JS
         $this->context->controller->addJS($this->_path . 'views/js/script.js');
         $this->context->controller->addJS($this->_path . 'views/js/crud.js');
+        $this->context->controller->addJS($this->_path . 'views/js/link_category_modal.js');
     }
 
     // install db 

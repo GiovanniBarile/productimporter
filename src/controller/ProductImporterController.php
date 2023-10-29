@@ -78,16 +78,37 @@ class ProductImporterController extends FrameworkBundleAdminController
 
     public function categoriesActionLink(Request $request)
     {
-        $selectedLocalCategoryIds = $request->get('local_categories')[0];
-        $selectedRemoteCategoryIds = $request->get('remote_categories');
+
+
+
+        $link_type = $request->get('type');
+        //types can be "locale" and "remota"
+        //if type is locale, $request->selectedCategory will be the id of the local one, otherwise it will be the id of the remote one
+        $selectedCategory = $request->get('selectedCategory');
+        //$request->data will be an array of ids of the categories to link to
+        //it will be a json_string like  "data" => "["5473","40"]"
+        $selectedCategories = $request->get('data');
+        //turn the json_string into an array
+        $selectedCategories = json_decode($selectedCategories,true);
+
+
 
         $em = $this->getDoctrine()->getManager();
 
-        //check if local category is already mapped to something 
-        $existingMapping = $em->getRepository(CategoryMapping::class)->findBy
-        ([
+        if ($link_type == 'locale') {
+            //if type is locale, $request->selectedCategory will be the id of the local one, otherwise it will be the id of the remote one
+            $selectedLocalCategoryIds = $selectedCategory;
+            $selectedRemoteCategoryIds = $selectedCategories;
+        } else {
+            $selectedLocalCategoryIds = $selectedCategories;
+            $selectedRemoteCategoryIds = $selectedCategory;
+        }
+
+        // dd($selectedLocalCategoryIds);
+        // Verifica se il collegamento esiste già
+        $existingMapping = $em->getRepository(CategoryMapping::class)->findBy([
             'idLocalCategory' => $selectedLocalCategoryIds[0],
-        ]); 
+        ]);
 
 
         if ($existingMapping) {
