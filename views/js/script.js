@@ -98,8 +98,7 @@ const initializeJsTree = () => {
 };
 
 const handleLinkCategory = (node) => {
-    // Check if node is mapped, using '✔️' as check icon
-    if (node.text.includes('✔️')) {
+    if (node.data.mapped) {
         // Ask if the user wants to continue, losing previous mapping
         Swal.fire({
             title: 'Sei sicuro?',

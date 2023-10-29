@@ -57,7 +57,7 @@
 			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}">
 				<ul>
 					{% for localCategory in categories %}
-						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}">
+						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}" data-mapped="{{ localCategory.x_mapped }}">
 							{{ localCategory.name }}
 							{{ localCategory.x_mapped ? '✔️' : '' }}
 							{% if localCategory.children is defined and localCategory.children|length > 0 %}
