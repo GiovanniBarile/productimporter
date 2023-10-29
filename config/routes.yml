@@ -21,12 +21,6 @@ productimporter-categories:
       _legacy_controller: 'AdminCategoryMapping'
       _legacy_link: 'AdminCategoryMapping'
 
-productimporter-categories-link:
-    path: productimporter/categories/link
-    methods: [POST]
-    defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionLink'
-    
 
 # START Category CRUD
 
@@ -35,14 +29,14 @@ productimporter-categories-delete:
     path: productimporter/categories/delete
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionDelete'
+      _controller: 'ProductImporter\Controller\CategoryCrudController:categoriesActionDelete'
 
 # Create category modal - Get parent categories 
 productimporter-categories-get-parents:
     path: productimporter/categories/get-parents
     methods: [GET]
     defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionGetParents'
+      _controller: 'ProductImporter\Controller\CategoryCrudController:categoriesActionGetParents'
     options:
         expose: true
 
@@ -51,7 +45,7 @@ productimporter-categories-add:
     path: productimporter/categories/add
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionCreate'
+      _controller: 'ProductImporter\Controller\CategoryCrudController:categoriesActionCreate'
     options:
         expose: true
 
@@ -60,7 +54,7 @@ productimporter-categories-edit:
     path: productimporter/categories/edit
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionEdit'
+      _controller: 'ProductImporter\Controller\CategoryCrudController:categoriesActionEdit'
     options:
         expose: true
 
@@ -69,17 +63,30 @@ productimporter-categories-edit:
 
 # START Category mapping operations
 
+#Link category
+productimporter-categories-link:
+    path: productimporter/categories/link
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionLink'
+    
 # Get local mapped categories
 productimporter-get-local-mapped-categories:
     path: productimporter/categories/local-mapped
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionGetLocalMapped'
+      _controller: 'ProductImporter\Controller\CategoryActionsController:categoriesActionGetLocalMapped'
 
 # Get remote mapped categories
 productimporter-get-remote-mapped-categories:
     path: productimporter/categories/remote-mapped
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\CategoriesCrudController:categoriesActionGetRemoteMapped'
+      _controller: 'ProductImporter\Controller\CategoryActionsController:categoriesActionGetRemoteMapped'
 
+#Unlink category
+productimporter-categories-unlink:
+    path: productimporter/categories/unlink
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionUnlink'

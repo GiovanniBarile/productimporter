@@ -218,64 +218,6 @@ class ProductImporterController extends FrameworkBundleAdminController
     }
 
 
-    // CRUD
-
-    // ActionDelete
-    public function categoriesActionDelete(Request $request)
-    {
-        $category_id = $request->get('category_id');
-
-        // Rimuovi la categoria da PrestaShop indipendentemente da tutto
-        $prestashopCategory = new Category($category_id);
-        if (!$prestashopCategory->delete()) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Failed to delete category from PrestaShop',
-            ]);
-        }
-
-        $em = $this->getDoctrine()->getManager();
-        //remove all associations from category_mapping
-        $categoryMapping = $em->getRepository(CategoryMapping::class)->findBy([
-            'idLocalCategory' => $category_id,
-        ]);
-
-
-        // Se esiste l'associazione in category_mapping, rimuovila
-        if ($categoryMapping) {
-            foreach ($categoryMapping as $mapping) {
-                $em->remove($mapping);
-            }
-            $em->flush();
-        }
-
-
-        return $this->json([
-            'success' => true,
-            'message' => 'Category deleted from PrestaShop and its associations removed if present',
-        ]);
-    }
-
-
-    public function categoriesActionGetParents()
-    {
-        // Recupera un elenco di tutte le categorie
-        $categories = Category::getCategories(null, true, false);
-
-        $categoryList = [];
-        foreach ($categories as $category) {
-            $categoryList[] = [
-                'id' => $category['id_category'],
-                'name' => $category['name'],
-            ];
-        }
-
-        return $this->json([
-            'success' => true,
-            'categories' => $categoryList,
-        ]);
-    }
-
     public function saveConfig($key, $data)
     {
         $config = Configuration::updateValue($key, $data);
