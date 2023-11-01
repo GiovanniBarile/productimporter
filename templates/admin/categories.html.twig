@@ -1,13 +1,15 @@
 {% extends "@PrestaShop/Admin/layout.html.twig" %}
 
 {% block content %}
-	<div class="d-flex justify-content-between">
+	<div class="d-flex justify-content-between" id="categoriesPage" 
+	data-unlink-category-url="{{ path('productimporter-categories-unlink') }}"	>
 		<div class="w-50 overflow-auto pr-2">
-				<input type="textarea" class="form-control" id="remoteCategoryName" readonly>
+				<input type="textarea" class="form-control" id="remoteLinkedCategories" readonly>
 			<div class="d-flex justify-content-between mb-3 flex-column mt-4">
 				<h1 class="m-0 p-0">Remote Categories</h1>
 			</div>
-			<div id="remote" class="demo" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
+			<div id="remote" class="demo" 
+			data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
 				<ul>
 					{% for remoteCategory in remote_categories %}
 						<li data-jstree='{"opened": true}' data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}">
@@ -44,7 +46,7 @@
 		<div class="w-50 overflow-auto pl-2">
 
         <div class="d-flex justify-content-between mb-3 flex-column">
-            <input type="textarea" class="form-control" id="localCategoryName" readonly>
+            <input type="textarea" class="form-control" id="localLinkedCategories" readonly>
             <div class="d-flex justify-content-between mt-4">
                 <h1 class="m-0 p-0">Local Categories</h1>
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal">

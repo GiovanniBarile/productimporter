@@ -34,12 +34,7 @@ const initializeJsTree = () => {
                     unlinkCategory: {
                         label: 'Unlink category',
                         action: () => {
-                            $.ajax({
-                                url: unlinkCategoryUrl,
-                                type: 'POST',
-                                data: { category_id: categoryId },
-                                success: () => window.location.reload(),
-                            });
+                            handleUnlinkCategory(node);
                         },
                     },
 
@@ -62,14 +57,6 @@ const initializeJsTree = () => {
                         action: () => {
                             let categoryId = node.data.categoryId;
                             deleteCategory(categoryId);
-                        },
-                    },
-
-
-                    viewLinkedCategories: {
-                        label: 'View linked categories',
-                        action: () => {
-                            handleLinkedCategories(node);
                         },
                     },
                 };
@@ -171,17 +158,70 @@ const continueLinkCategory = (node) => {
 
 };
 
+const handleUnlinkCategory = (node) => {
+    let categoryId = node.data.categoryId;
+    let nodeType = node.id.includes('j2') ? 'locale' : 'remota';
+    let unlinkCategoryUrl = $('#categoriesPage').data('unlink-category-url');
+
+
+
+    Swal.fire({
+        title: 'Sei sicuro?',
+        text: 'Sei sicuro di voler scollegare la categoria?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        cancelButtonText: 'Annulla',
+        confirmButtonText: 'Continua!',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: unlinkCategoryUrl,
+                type: 'POST',
+                data: { 
+                    type: nodeType,
+                    category_id: categoryId 
+                    
+                },
+                success: () => {
+                    Swal.fire('Fatto!', 'La categoria è stata scollegata con successo.', 'success');
+                    window.location.reload();
+                },
+                fail: () => {
+                    Swal.fire('Errore!', 'Si è verificato un errore durante lo scollegamento della categoria.', 'error');
+                },
+            });
+        }
+    }
+    );
+
+
+};
+
+
+
+
 const getMappedCategories = (url, tree, categoryId) => {
+    $('#remoteLinkedCategories, #localLinkedCategories').val('');
+
     $.post(url, { category_id: categoryId }, (response) => {
         if (response.success && response.result.length > 0) {
+
             const mappedCategoryIds = response.result;
+            //create an array of text from the tree using the mappedCategoryIds
+            let mappedCategories = [];
+
             $.each(mappedCategoryIds, (index, mappedCategoryId) => {
+                mappedCategories.push(tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`)).text.replace('✔️', '').trim());
+
                 const node = tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`));
                 if (node) {
                     tree.jstree(true).select_node(node);
                     tree.jstree(true).set_icon(node, 'fas fa-check-circle');
                 }
             });
+            $('#' + tree.attr('id') + 'LinkedCategories').val(mappedCategories.join(', '));
         } else {
             console.log('No mapped categories found');
         }
@@ -282,6 +322,8 @@ $(document).ready(() => {
 
     //if click on remote or local tree, and there are selected nodes, deselect them and remove check icon
     $('#local, #remote').on('click.jstree', function (e) {
+        //reset linked categories input
+        $('#remoteLinkedCategories, #localLinkedCategories').val('');
         //change the opposite tree
         if (e.currentTarget.id == 'local') {
             //get all selected nodes

@@ -68,7 +68,7 @@ productimporter-categories-link:
     path: productimporter/categories/link
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionLink'
+      _controller: 'ProductImporter\Controller\CategoryActionsController:categoriesActionLink'
     
 # Get local mapped categories
 productimporter-get-local-mapped-categories:
@@ -89,4 +89,4 @@ productimporter-categories-unlink:
     path: productimporter/categories/unlink
     methods: [POST]
     defaults:
-      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionUnlink'
+      _controller: 'ProductImporter\Controller\CategoryActionsController:categoriesActionUnlink'

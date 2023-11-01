@@ -26,7 +26,7 @@
 							{# To link remote #}
 							<div id="linkCategoryRemote" class="d-none">
 
-								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="selectPicker">
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="remoteSelectPicker">
 									{% for remoteCategory in remote_categories %}
 										<optgroup label="{{ remoteCategory.name }}">
 											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
@@ -47,7 +47,7 @@
 							{# To link local #}
 
 							<div id="linkCategoryLocal" class="d-none">
-								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="selectPicker">
+								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="localSelectPicker">
 									{% for existing_category in categories %}
 										<optgroup label="{{ existing_category.name }}">
 											{% if existing_category.children is defined and existing_category.children|length > 0 %}
