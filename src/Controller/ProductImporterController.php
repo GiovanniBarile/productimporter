@@ -49,6 +49,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         $existing_categories = Category::getNestedCategories();
         $remote_categories = $this->orderRemoteCategories();
     
+        // dd($remote_categories);
         // get all local mapped categories 
         $sql = "SELECT `id_local_category` FROM ps_category_mapping GROUP BY id_local_category";
         $mapped_local_categories = Db::getInstance()->executeS($sql);
@@ -164,15 +165,20 @@ class ProductImporterController extends FrameworkBundleAdminController
     }
 
     public function categoriesActionSync(Request $request) {
+
+        //remove all the categories from the database, except the root and home categories
+        $sql = "DELETE FROM ps_category WHERE id_category > 2";
+        Db::getInstance()->execute($sql);
+
+        //remove all the category mappings from the database
+        $sql = "DELETE FROM ps_category_mapping";
+        Db::getInstance()->execute($sql);
+
+        
         $remote_categories = $this->orderRemoteCategories();
-        //add only 3 categories for testing
-        $counter = 0;
+        
         foreach ($remote_categories as $remote_category) {
             $this->syncCategory($remote_category);
-            $counter++;
-            if ($counter == 3) {
-                break;
-            }
         }
         return $this->json([
             'success' => true,
@@ -203,6 +209,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         $category->update();
     }
     
+
     
 
 }

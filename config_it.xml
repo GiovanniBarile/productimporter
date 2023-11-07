@@ -4,7 +4,7 @@
     <displayName><![CDATA[Product Importer]]></displayName>
     <version><![CDATA[1.0.0]]></version>
     <description><![CDATA[Import products from external sources]]></description>
-    <author><![CDATA[Giovanni Barile]]></author>
+    <author><![CDATA[]]></author>
     <tab><![CDATA[administration]]></tab>
 	<confirmUninstall><![CDATA[Are you sure you want to uninstall?]]></confirmUninstall>
     <is_configurable>1</is_configurable>

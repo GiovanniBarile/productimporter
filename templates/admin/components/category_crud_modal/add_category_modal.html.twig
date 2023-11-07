@@ -1,59 +1,57 @@
-
-
 {% block content %}
 
-<div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog"  aria-hidden="true" data-get-parents-url='{{path('productimporter-categories-get-parents')}}'>
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-label">Aggiungi categoria</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="addCategoryForm">
-                    <div class="form-group">
-                        <label for="categoryName">Nome della categoria</label>
-                        <input type="text" class="form-control" id="categoryName" name="categoryName">
-                    </div>
-                    <div class="form-group">
-                        <label for="parentCategory">Categoria genitore</label>
-                        {# <select class="form-control" id="parentCategory" name="parentCategory">
-                            <!-- Popola dinamicamente le categorie genitore qui -->
-                        </select> #}
-                        <select class="selectpicker" id="parentCategory" name="parentCategory" data-live-search="true" data-size="5" data-width="100%">
-                            <!-- Popola dinamicamente le categorie genitore qui -->
-                                {% for existing_category in categories %}
-											{% if existing_category.children is defined and existing_category.children|length > 0 %}
-												{% for childCategory in existing_category.children %}
-													<option value="{{ childCategory.id_category }}" style="font-weight:bold">[+] {{ childCategory.name }}</option>
-													{% if childCategory.children is defined and childCategory.children|length > 0 %}
-														{% for localChild2 in childCategory.children %}
-															<option value="{{ localChild2.id_category }}">-- {{ localChild2.name }}</option>
-                                                                {% if localChild2.children is defined and localChild2.children|length > 0 %}
-                                                                    {% for localChild3 in localChild2.children %}
-                                                                        <option value="{{ localChild3.id_category }}">----{{ localChild3.name }}</option>
-                                                                    {% endfor %}
-                                                                {% endif %}
+	<div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-hidden="true" data-get-parents-url='{{path('productimporter-categories-get-parents')}}'>
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modal-label">Aggiungi categoria</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="addCategoryForm">
+						<div class="form-group">
+							<label for="categoryName">Nome della categoria</label>
+							<input type="text" class="form-control" id="categoryName" name="categoryName">
+						</div>
+						<div class="form-group">
+							<label for="parentCategory">Categoria genitore</label>
+							{# <select class="form-control" id="parentCategory" name="parentCategory">
+							                            <!-- Popola dinamicamente le categorie genitore qui -->
+							                        </select> #}
+							<select
+								class="selectpicker" id="parentCategory" name="parentCategory" data-live-search="true" data-size="5" data-width="100%">
+								<!-- Popola dinamicamente le categorie genitore qui -->
+								{% for existing_category in categories %}
+									{% if existing_category.children is defined and existing_category.children|length > 0 %}
+										{% for childCategory in existing_category.children %}
+											<option value="{{ childCategory.id_category }}" style="font-weight:bold">[+]
+												{{ childCategory.name }}</option>
+											{% if childCategory.children is defined and childCategory.children|length > 0 %}
+												{% for localChild2 in childCategory.children %}
+													<option value="{{ localChild2.id_category }}">--
+														{{ localChild2.name }}</option>
+													{% if localChild2.children is defined and localChild2.children|length > 0 %}
+														{% for localChild3 in localChild2.children %}
+															<option value="{{ localChild3.id_category }}">----{{ localChild3.name }}</option>
 														{% endfor %}
 													{% endif %}
 												{% endfor %}
 											{% endif %}
-									{% endfor %}
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
-                <button type="button" class="btn btn-primary" id="saveCategory" data-submit-url='{{path('productimporter-categories-add')}}'>Salva</button>
-            </div>
-        </div>
-    </div>
-</div>
+										{% endfor %}
+									{% endif %}
+								{% endfor %}
+							</select>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+					<button type="button" class="btn btn-primary" id="saveCategory" data-submit-url='{{path('productimporter-categories-add')}}'>Salva</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
 {% endblock %}
-
-
-

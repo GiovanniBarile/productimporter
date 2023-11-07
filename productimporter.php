@@ -129,14 +129,26 @@ class ProductImporter extends Module
             `id_local_category` int(11) NOT NULL,
             `id_remote_category` int(11) NOT NULL,
             PRIMARY KEY (`id`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    
+        $sql .= "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "remote_categories` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `name` VARCHAR(255),
+            `slug` VARCHAR(255),
+            `parent_id` INT,
+            PRIMARY KEY (`id`),
+            INDEX `idx_parent_id` (`parent_id`),
+            FOREIGN KEY (`parent_id`) REFERENCES `" . _DB_PREFIX_ . "remote_categories`(`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    
         return Db::getInstance()->execute($sql);
     }
-
+    
     public function uninstallDb()
     {
-        $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`";
+        $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`;";
+        $sql .= "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "remote_categories`;";
         return Db::getInstance()->execute($sql);
     }
+    
 }
