@@ -25,23 +25,21 @@
                         <select class="selectpicker" id="parentCategory" name="parentCategory" data-live-search="true" data-size="5" data-width="100%">
                             <!-- Popola dinamicamente le categorie genitore qui -->
                                 {% for existing_category in categories %}
-										<optgroup label="{{ existing_category.name }}">
 											{% if existing_category.children is defined and existing_category.children|length > 0 %}
 												{% for childCategory in existing_category.children %}
-													<option value="{{ childCategory.id_category }}" style="font-weight:bold">{{ childCategory.name }}</option>
+													<option value="{{ childCategory.id_category }}" style="font-weight:bold">[+] {{ childCategory.name }}</option>
 													{% if childCategory.children is defined and childCategory.children|length > 0 %}
 														{% for localChild2 in childCategory.children %}
-															<option value="{{ localChild2.id_category }}">{{ localChild2.name }}</option>
+															<option value="{{ localChild2.id_category }}">-- {{ localChild2.name }}</option>
                                                                 {% if localChild2.children is defined and localChild2.children|length > 0 %}
                                                                     {% for localChild3 in localChild2.children %}
-                                                                        <option value="{{ localChild3.id_category }}">{{ localChild3.name }}</option>
+                                                                        <option value="{{ localChild3.id_category }}">----{{ localChild3.name }}</option>
                                                                     {% endfor %}
                                                                 {% endif %}
 														{% endfor %}
 													{% endif %}
 												{% endfor %}
 											{% endif %}
-										</optgroup>
 									{% endfor %}
                         </select>
                     </div>

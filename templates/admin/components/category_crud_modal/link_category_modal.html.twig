@@ -28,7 +28,6 @@
 
 								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="remoteSelectPicker">
 									{% for remoteCategory in remote_categories %}
-
 										<option value="{{ remoteCategory.id }}" style="font-weight:bold; color:green">[+] {{ remoteCategory.name }}</option>
 											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 												{% for remoteChildCategory in remoteCategory.x_children %}
@@ -40,7 +39,6 @@
 													{% endif %}
 												{% endfor %}
 											{% endif %}
-
 									{% endfor %}
 								</select>
 							</div>
