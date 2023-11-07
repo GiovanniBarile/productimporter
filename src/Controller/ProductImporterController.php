@@ -63,6 +63,8 @@ class ProductImporterController extends FrameworkBundleAdminController
                 }
             }
         }
+
+        // dd($existing_categories);
     
         // Call the recursive function to mark categories
         markMappedCategories($existing_categories, $mapped_local_categories);
@@ -160,4 +162,47 @@ class ProductImporterController extends FrameworkBundleAdminController
         $config = Configuration::get($key);
         return $config;
     }
+
+    public function categoriesActionSync(Request $request) {
+        $remote_categories = $this->orderRemoteCategories();
+        //add only 3 categories for testing
+        $counter = 0;
+        foreach ($remote_categories as $remote_category) {
+            $this->syncCategory($remote_category);
+            $counter++;
+            if ($counter == 3) {
+                break;
+            }
+        }
+        return $this->json([
+            'success' => true,
+            'message' => 'Categories synced successfully',
+        ]);
+    }
+
+    public function syncCategory($remoteCategory, $parentId = 2) {
+        $category = new Category();
+    
+        $category->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['name']);
+        $category->id_parent = $parentId;
+        $category->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['slug']);
+        $category->active = 1;
+    
+        if ($category->add()) {
+            $categoryId = $category->id;
+    
+            if (!empty($remoteCategory['x_children'])) {
+                foreach ($remoteCategory['x_children'] as $childCategory) {
+                    $this->syncCategory($childCategory, $categoryId);
+                }
+            }
+        }
+    
+        // Aggiorna la categoria appena creata, in modo da poter avere l'ID corretto
+        $category = new Category($categoryId);
+        $category->update();
+    }
+    
+    
+
 }

@@ -90,3 +90,16 @@ productimporter-categories-unlink:
     methods: [POST]
     defaults:
       _controller: 'ProductImporter\Controller\CategoryActionsController:categoriesActionUnlink'
+
+
+# END Category mapping operations
+
+
+
+#EXTRAS
+# Sync categories
+productimporter-categories-sync:
+    path: productimporter/categories/sync
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionSync'

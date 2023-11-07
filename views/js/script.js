@@ -347,6 +347,28 @@ $(document).ready(() => {
         }
     });
 
+
+    $('#syncButton').on('click', function () {
+
+        let sure = confirm('Sei sicuro di voler sincronizzare le categorie?');
+
+        if (sure) {
+            $.ajax({
+                url: $('#syncButton').attr('data-sync-url'),
+                type: 'POST',
+                success: () => {
+                    Swal.fire('Fatto!', 'Le categorie sono state sincronizzate con successo.', 'success');
+                    // window.location.reload();
+                },
+                fail: () => {
+                    Swal.fire('Errore!', 'Si è verificato un errore durante la sincronizzazione delle categorie.', 'error');
+                },
+            });
+        }
+
+
+    });
+
 });
 
 

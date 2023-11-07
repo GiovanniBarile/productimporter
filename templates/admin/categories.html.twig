@@ -1,8 +1,18 @@
 {% extends "@PrestaShop/Admin/layout.html.twig" %}
 
 {% block content %}
+		<div class="d-flex justify-content-center mb-3 flex-column col-1">
+			<h1 class="m-0 p-0">Sync</h1>
+			<button type="button" class="btn btn-danger" id="syncButton" data-sync-url="{{ path('productimporter-categories-sync') }}">
+				<i class="material-icons">sync</i>
+			</button>
+			</div>
 	<div class="d-flex justify-content-between" id="categoriesPage" 
 	data-unlink-category-url="{{ path('productimporter-categories-unlink') }}"	>
+
+
+
+
 		<div class="w-50 overflow-auto pr-2">
 				<input type="textarea" class="form-control" id="remoteLinkedCategories" readonly>
 			<div class="d-flex justify-content-between mb-3 flex-column mt-4">
@@ -74,6 +84,17 @@
 														<li data-jstree='{"opened": true}' data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}">
 															{{ localChild2.name }}
 															{{ localChild2.x_mapped ? '✔️' : '' }}
+															{% if localChild2.children is defined and localChild2.children|length > 0 %}
+
+															<ul>
+																{% for localChild3 in localChild2.children %}
+																	<li data-category-id="{{ localChild3.id_category }}" data-mapped="{{ localChild3.x_mapped }}">
+																		{{ localChild3.name }}
+																		{{ localChild3.x_mapped ? '✔️' : '' }}
+																	</li>
+																{% endfor %}
+															</ul>
+															{% endif %}
 														</li>
 													{% endfor %}
 												</ul>

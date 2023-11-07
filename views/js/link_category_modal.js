@@ -8,14 +8,9 @@ $(document).ready(() => {
 
         $('#remoteSelectPicker').selectpicker('deselectAll');
         $('#localSelectPicker').selectpicker('deselectAll');
-
-
         checkIfSomethingIsSelected();
-
         linkCategoriesAction();
     });
-
-
 });
 
 
@@ -61,18 +56,24 @@ const linkCategoriesAction = () => {
 
 
 const linkCategoryCall = (type, selectedCategory, data) => {
-
     let url = $('#linkCategoryModal').data('link-categories-url');
+    
+
+    //TODO: controlla se sono già linkate
+    
     let formData = {
         type: type,
         selectedCategory : selectedCategory,
         data: JSON.stringify(data)
     };
 
+
+
     $.post(url, formData, function (data) {
         if (data.success) {
             $('#linkCategoryModal').modal('hide');
-            // window.location.reload();
+            window.location.reload();
         }
     });
 };
+

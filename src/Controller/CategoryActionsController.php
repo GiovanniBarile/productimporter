@@ -122,9 +122,10 @@ class CategoryActionsController extends FrameworkBundleAdminController
         } else {
             $selectedLocalCategoryIds = $selectedCategories;
             $selectedRemoteCategoryIds = [$selectedCategory];
+
+
         }
 
-        
         // Verifica se il collegamento esiste già
         $existingMapping = $em->getRepository(CategoryMapping::class)->findBy([
             'idLocalCategory' => $selectedLocalCategoryIds[0],
@@ -138,28 +139,28 @@ class CategoryActionsController extends FrameworkBundleAdminController
             }
             $em->flush();
         }
-
-        foreach ($selectedRemoteCategoryIds as $remoteCategory) {
-            // Verifica se il collegamento esiste già
-            $existingMapping = $em->getRepository(CategoryMapping::class)->findOneBy([
-                'idLocalCategory' => $selectedLocalCategoryIds[0],
-                'idRemoteCategory' => $remoteCategory,
-            ]);
-
-            //if local category is already mapped to remote category, delete the mapping
-
-
-            if (!$existingMapping) {
-                // Se non esiste, crea e persisti il collegamento
-                $categoryMapping = new CategoryMapping();
-                $categoryMapping->setIdLocalCategory($selectedLocalCategoryIds[0]);
-                $categoryMapping->setIdRemoteCategory($remoteCategory);
-                $em->persist($categoryMapping);
+        is_string($selectedLocalCategoryIds) ? $selectedLocalCategoryIds = [$selectedLocalCategoryIds] : null;
+        
+        foreach ($selectedLocalCategoryIds as $localCategory) {
+            foreach ($selectedRemoteCategoryIds as $remoteCategory) {
+                $existingMapping = $em->getRepository(CategoryMapping::class)->findOneBy([
+                    'idLocalCategory' => $localCategory,
+                    'idRemoteCategory' => $remoteCategory,
+                ]);
+        
+                // If local category is already mapped to remote category, delete the mapping
+        
+                if (!$existingMapping) {
+                    // If it doesn't exist, create and persist the mapping
+                    $categoryMapping = new CategoryMapping();
+                    $categoryMapping->setIdLocalCategory($localCategory);
+                    $categoryMapping->setIdRemoteCategory($remoteCategory);
+                    $em->persist($categoryMapping);
+                }
             }
         }
-
+        
         $em->flush();
-
         return $this->json([
             'success' => true,
             'message' => 'Categories linked successfully',
@@ -201,7 +202,5 @@ class CategoryActionsController extends FrameworkBundleAdminController
             'success' => true,
             'message' => 'Categories unlinked successfully',
         ]);
-
-
     }
 }
