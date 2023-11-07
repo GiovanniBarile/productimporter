@@ -28,18 +28,19 @@
 
 								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="remoteSelectPicker">
 									{% for remoteCategory in remote_categories %}
-										<optgroup label="{{ remoteCategory.name }}">
+
+										<option value="{{ remoteCategory.id }}" style="font-weight:bold; color:green">[+] {{ remoteCategory.name }}</option>
 											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 												{% for remoteChildCategory in remoteCategory.x_children %}
-													<option value="{{ remoteChildCategory.id }}">{{ remoteChildCategory.name }}</option>
+													<option value="{{ remoteChildCategory.id }}" style="font-weight:bold; color:blue">-- {{ remoteChildCategory.name }}</option>
 													{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
 														{% for remoteChild2 in remoteChildCategory.x_children %}
-															<option value="{{ remoteChild2.id }}">{{ remoteChild2.name }}</option>
+															<option value="{{ remoteChild2.id }}" style="color:grey">---- {{ remoteChild2.name }}</option>
 														{% endfor %}
 													{% endif %}
 												{% endfor %}
 											{% endif %}
-										</optgroup>
+
 									{% endfor %}
 								</select>
 							</div>
@@ -49,18 +50,17 @@
 							<div id="linkCategoryLocal" class="d-none">
 								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="localSelectPicker">
 									{% for existing_category in categories %}
-										<optgroup label="{{ existing_category.name }}">
 											{% if existing_category.children is defined and existing_category.children|length > 0 %}
+											<option value="{{ existing_category.id_category }}" style="font-weight:bold; color:green">[+] {{ existing_category.name }}</option>
 												{% for childCategory in existing_category.children %}
-													<option value="{{ childCategory.id_category }}">{{ childCategory.name }}</option>
+													<option value="{{ childCategory.id_category }}" style="font-weight:bold; color:blue">-- {{ childCategory.name }}</option>
 													{% if childCategory.children is defined and childCategory.children|length > 0 %}
 														{% for localChild2 in childCategory.children %}
-															<option value="{{ localChild2.id_category }}">{{ localChild2.name }}</option>
+															<option value="{{ localChild2.id_category }}" style="color:grey">---- {{ localChild2.name }}</option>
 														{% endfor %}
 													{% endif %}
 												{% endfor %}
 											{% endif %}
-										</optgroup>
 									{% endfor %}
 								</select>
 							</div>

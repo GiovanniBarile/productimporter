@@ -1,22 +1,22 @@
 
 $(document).ready(function () {
-    $('#addCategoryModal').on('show.bs.modal', function (event) {
-        //get the get-parents-url from modal div
-        var url = $('#addCategoryModal').data('get-parents-url');
-        $.get(url, function (data) {
-            var parentCategorySelect = $('#parentCategory');
-            parentCategorySelect.empty();
-            //show loading screen while waiting for response 
-            parentCategorySelect.append('<option value="0" disabled selected>Loading...</option>');
-            if (data.success) {
-                parentCategorySelect.empty();
-                $.each(data.categories, function (index, category) {
-                    parentCategorySelect.append('<option value="' + category.id + '">' + category.name + '</option>');
-                });
-            }
+    // $('#addCategoryModal').on('show.bs.modal', function (event) {
+    //     //get the get-parents-url from modal div
+    //     var url = $('#addCategoryModal').data('get-parents-url');
+    //     $.get(url, function (data) {
+    //         var parentCategorySelect = $('#parentCategory');
+    //         parentCategorySelect.empty();
+    //         //show loading screen while waiting for response 
+    //         parentCategorySelect.append('<option value="0" disabled selected>Loading...</option>');
+    //         if (data.success) {
+    //             parentCategorySelect.empty();
+    //             $.each(data.categories, function (index, category) {
+    //                 parentCategorySelect.append('<option value="' + category.id + '">' + category.name + '</option>');
+    //             });
+    //         }
 
-        });
-    });
+    //     });
+    // });
 
     $('#saveCategory').click(function () {
         var form = $('#addCategoryForm');
