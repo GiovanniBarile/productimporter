@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 //     id INT AUTO_INCREMENT PRIMARY KEY,
 //     name VARCHAR(255) NOT NULL,
 //     slug VARCHAR(255),
+//     original_id INT,
 //     parent_id INT,
 //     FOREIGN KEY (parent_id) REFERENCES categories(id)
 // );
@@ -47,6 +48,19 @@ class RemoteCategories
      */
 
     private $slug;
+
+
+
+    /**
+     * @var int
+     * 
+     * @ORM\Column(name="original_id", type="integer")
+     * 
+     */
+
+    private $original_id;
+
+
 
     /**
      * @var int
@@ -122,6 +136,28 @@ class RemoteCategories
      * @return int
      */
 
+    public function getOriginalId()
+    {
+        return $this->original_id;
+    }
+
+    /**
+     * @param int $original_id
+     *
+     * @return RemoteCategories
+     */
+
+    public function setOriginalId($original_id)
+    
+        {
+            $this->original_id = $original_id;
+            return $this;
+        }
+        
+    /**
+     * @return int
+     */
+
     public function getParentId()
     {
         return $this->parent_id;
@@ -151,6 +187,7 @@ class RemoteCategories
             'id' => $this->getId(),
             'name' => $this->getName(),
             'slug' => $this->getSlug(),
+            'original_id' => $this->getOriginalId(),
             'parent_id' => $this->getParentId(),
         ];
     }

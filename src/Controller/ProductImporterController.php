@@ -7,6 +7,7 @@ use Configuration;
 use Db;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use ProductImporter\Entity\CategoryMapping;
+use ProductImporter\Entity\RemoteCategories;
 use ProductImporter\Forms\ConfigType;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -47,16 +48,20 @@ class ProductImporterController extends FrameworkBundleAdminController
     public function categoriesAction(Request $request)
     {
         $existing_categories = Category::getNestedCategories();
-        $remote_categories = $this->orderRemoteCategories();
-    
+        $remote_categories = $this->getRemoteCategories();
+
+        // dd($remote_categories);
+        // dd($remote_categories); 
+
         // dd($remote_categories);
         // get all local mapped categories 
         $sql = "SELECT `id_local_category` FROM ps_category_mapping GROUP BY id_local_category";
         $mapped_local_categories = Db::getInstance()->executeS($sql);
         $mapped_local_categories = array_column($mapped_local_categories, 'id_local_category');
 
-       // Define a recursive function to mark categories
-        function markMappedCategories(&$categories, $mapped_local_categories) {
+        // Define a recursive function to mark categories
+        function markMappedCategories(&$categories, $mapped_local_categories)
+        {
             foreach ($categories as &$category) {
                 $category['x_mapped'] = in_array($category['id_category'], $mapped_local_categories);
                 if (isset($category['children'])) {
@@ -66,10 +71,10 @@ class ProductImporterController extends FrameworkBundleAdminController
         }
 
         // dd($existing_categories);
-    
+
         // Call the recursive function to mark categories
         markMappedCategories($existing_categories, $mapped_local_categories);
-        
+
         // dd($remote_categories);
         // dd($existing_categories);
         return $this->render('@Modules/productimporter/templates/admin/categories.html.twig', [
@@ -77,36 +82,125 @@ class ProductImporterController extends FrameworkBundleAdminController
             'remote_categories' => $remote_categories,
         ]);
     }
-    
 
-    
+
+
 
     public function getRemoteCategories()
     {
-        $api_key = $this->getConfig('european_resource_api_key');
-        $url = 'https://product-api.europeansourcing.com/api/v1.1/categories/it';
-        $headers = [
-            'Content-Type: application/json',
-            'accept: application/json',
-            'x-auth-token: ' . $api_key,
-        ];
+        //check if RemoteCategories table is empty 
+        $sql = "SELECT * FROM ps_remote_categories";
+        $result = Db::getInstance()->executeS($sql);
+        if ($result) {
+
+            // dd("vuoto");
+            // dd($this->orderCategories($result));
+            return $this->orderCategories($result);
+        } else {
+
+            $api_key = $this->getConfig('european_resource_api_key');
+            $url = 'https://product-api.europeansourcing.com/api/v1.1/categories/it';
+            $headers = [
+                'Content-Type: application/json',
+                'accept: application/json',
+                'x-auth-token: ' . $api_key,
+            ];
 
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-        $response = curl_exec($ch);
-        curl_close($ch);
-        $response = json_decode($response, true);
+            $response = curl_exec($ch);
+            curl_close($ch);
+            $response = json_decode($response, true);
+            $em = $this->getDoctrine()->getManager();
+            //do it 3 times 
+            $counter = 0;
+            foreach ($response as $key => $value) {
+                //add category
 
-        return $response;
+
+
+                $remoteCategory = $em->getRepository(RemoteCategories::class)->findOneBy(['original_id' => $value['id']]);
+                if (!$remoteCategory) {
+                    $remoteCategory = new RemoteCategories();
+                }
+                $remoteCategory->setName($value['name']);
+                $remoteCategory->setSlug($value['slug']);
+                $remoteCategory->setOriginalId($value['id']);
+                $remoteCategory->setParentId($value['parent'] ?? null);
+                $em->persist($remoteCategory);
+                $em->flush();
+
+                $counter++;
+            }
+
+            return $response;
+        }
+    }
+
+    public function orderCategories($categories)
+    {
+
+        $sql = "SELECT `id_remote_category` FROM ps_category_mapping GROUP BY id_remote_category";
+        $mapped_local_categories = Db::getInstance()->executeS($sql);
+        $mapped_local_categories = array_column($mapped_local_categories, 'id_remote_category');
+
+        //we have to order the categories by parent id
+        $ordered_categories = [];
+        //foreach category, if parent_id == null, add it to the ordered_categories array
+        foreach ($categories as $category) {
+            if ($category['parent_id'] == null) {
+                if (in_array($category['id'], $mapped_local_categories)) {
+                    $category['x_mapped'] = true;
+                } else {
+                    $category['x_mapped'] = false;
+                }
+                $ordered_categories[] = $category;
+            }
+        }
+
+        //foreach category, if parent_id == ordered_category['id'], add it to the ordered_categories['x_children'] array and do the same for the children of the children
+        foreach ($ordered_categories as &$ordered_category) {
+            foreach ($categories as $category) {
+                if ($category['parent_id'] == $ordered_category['original_id']) {
+                    if (in_array($category['id'], $mapped_local_categories)) {
+                        $category['x_mapped'] = true;
+                    } else {
+                        $category['x_mapped'] = false;
+                    }
+                    $ordered_category['x_children'][] = $category;
+                }
+            }
+
+            if (isset($ordered_category['x_children'])) {
+                foreach ($ordered_category['x_children'] as &$child) {
+                    foreach ($categories as $category) {
+                        if ($category['parent_id'] == $child['original_id']) {
+                            if (in_array($category['id'], $mapped_local_categories)) {
+                                $category['x_mapped'] = true;
+                            } else {
+                                $category['x_mapped'] = false;
+                            }
+                            $child['x_children'][] = $category;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // dd($ordered_categories);
+        return $ordered_categories;
     }
 
 
+
+
     public function orderRemoteCategories()
-    {   
+    {
         $sql = "SELECT `id_remote_category` FROM ps_category_mapping GROUP BY id_remote_category";
         $mapped_local_categories = Db::getInstance()->executeS($sql);
         $mapped_local_categories = array_column($mapped_local_categories, 'id_remote_category');
@@ -164,7 +258,8 @@ class ProductImporterController extends FrameworkBundleAdminController
         return $config;
     }
 
-    public function categoriesActionSync(Request $request) {
+    public function categoriesActionSync(Request $request)
+    {
 
         //remove all the categories from the database, except the root and home categories
         $sql = "DELETE FROM ps_category WHERE id_category > 2";
@@ -174,9 +269,9 @@ class ProductImporterController extends FrameworkBundleAdminController
         $sql = "DELETE FROM ps_category_mapping";
         Db::getInstance()->execute($sql);
 
-        
+
         $remote_categories = $this->orderRemoteCategories();
-        
+
         foreach ($remote_categories as $remote_category) {
             $this->syncCategory($remote_category);
         }
@@ -186,30 +281,27 @@ class ProductImporterController extends FrameworkBundleAdminController
         ]);
     }
 
-    public function syncCategory($remoteCategory, $parentId = 2) {
+    public function syncCategory($remoteCategory, $parentId = 2)
+    {
         $category = new Category();
-    
+
         $category->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['name']);
         $category->id_parent = $parentId;
         $category->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['slug']);
         $category->active = 1;
-    
+
         if ($category->add()) {
             $categoryId = $category->id;
-    
+
             if (!empty($remoteCategory['x_children'])) {
                 foreach ($remoteCategory['x_children'] as $childCategory) {
                     $this->syncCategory($childCategory, $categoryId);
                 }
             }
         }
-    
+
         // Aggiorna la categoria appena creata, in modo da poter avere l'ID corretto
         $category = new Category($categoryId);
         $category->update();
     }
-    
-
-    
-
 }

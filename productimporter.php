@@ -124,31 +124,45 @@ class ProductImporter extends Module
     // CREATE TABLE ps_category_mapping (id INT AUTO_INCREMENT NOT NULL, id_local_category INT NOT NULL, id_remote_category INT NOT NULL, local_category_name VARCHAR(64) NOT NULL, remote_category_name VARCHAR(64) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
     public function installDb()
     {
-        $sql = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "category_mapping` (
+        $product_mapping_sql = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "category_mapping` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
             `id_local_category` int(11) NOT NULL,
             `id_remote_category` int(11) NOT NULL,
             PRIMARY KEY (`id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    
-        $sql .= "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "remote_categories` (
-            `id` INT NOT NULL AUTO_INCREMENT,
-            `name` VARCHAR(255),
-            `slug` VARCHAR(255),
-            `parent_id` INT,
-            PRIMARY KEY (`id`),
-            INDEX `idx_parent_id` (`parent_id`),
-            FOREIGN KEY (`parent_id`) REFERENCES `" . _DB_PREFIX_ . "remote_categories`(`id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    
-        return Db::getInstance()->execute($sql);
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+
+          $remote_categories_sql = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "remote_categories` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `slug` varchar(255) NOT NULL,
+            `original_id` int(11) NOT NULL,
+            `parent_id` int(11) NULL,
+            PRIMARY KEY (`id`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+            
+          try {
+            Db::getInstance()->execute($product_mapping_sql);
+            Db::getInstance()->execute($remote_categories_sql);
+        } catch (Exception $e) {
+            return false;
+        }
+        
+        return true;
+
+        // return Db::getInstance()->execute($sql);
     }
-    
+
     public function uninstallDb()
     {
-        $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`;";
-        $sql .= "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "remote_categories`;";
-        return Db::getInstance()->execute($sql);
+        $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`";
+        $sql2 = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "remote_categories`";
+        try {
+            Db::getInstance()->execute($sql);
+            Db::getInstance()->execute($sql2);
+        } catch (Exception $e) {
+            return false;
+        }
+        return true;
+
     }
-    
 }
