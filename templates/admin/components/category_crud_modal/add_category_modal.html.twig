@@ -24,6 +24,8 @@
 								class="selectpicker" id="parentCategory" name="parentCategory" data-live-search="true" data-size="5" data-width="100%">
 								<!-- Popola dinamicamente le categorie genitore qui -->
 								{% for existing_category in categories %}
+									<option value="{{ existing_category.id_category }}" style="font-weight:bold">[+]
+										{{ existing_category.name }}</option>
 									{% if existing_category.children is defined and existing_category.children|length > 0 %}
 										{% for childCategory in existing_category.children %}
 											<option value="{{ childCategory.id_category }}" style="font-weight:bold">[+]

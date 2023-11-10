@@ -72,7 +72,7 @@ const linkCategoryCall = (type, selectedCategory, data) => {
     $.post(url, formData, function (data) {
         if (data.success) {
             $('#linkCategoryModal').modal('hide');
-            window.location.reload();
+            // window.location.reload();
         }
     });
 };

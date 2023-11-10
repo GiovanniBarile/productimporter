@@ -63,7 +63,7 @@ const initializeJsTree = () => {
 
 
                 if (mapped) {
-                    delete items.linkCategory;
+                    // delete items.linkCategory;
                 } else {
                     delete items.viewLinkedCategories;
                     delete items.unlinkCategory;
@@ -71,12 +71,20 @@ const initializeJsTree = () => {
                 }
 
                 //if node is remote root, delete edit and delete category
-                if (node.id.includes('j1')) {
+                if (node.id.includes('j1') ) {
                     delete items.editCategory;
                     delete items.deleteCategory;
                 }
 
+                if(node.text.trim() == ('Home')){
+                    //can't do anything
+                    delete items.editCategory;
+                    delete items.deleteCategory;
+                    delete items.linkCategory;
+                    delete items.unlinkCategory;
+                    delete items.getMappedCategories;
 
+                }
 
                 return items;
             },
@@ -84,31 +92,31 @@ const initializeJsTree = () => {
     });
 };
 
-const handleLinkCategory = (node) => {
-    if (node.data.mapped) {
-        // Ask if the user wants to continue, losing previous mapping
-        Swal.fire({
-            title: 'Sei sicuro?',
-            text: 'Sei sicuro di voler collegare la categoria? Le precedenti assegnazioni andranno perse',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            cancelButtonText: 'Annulla',
-            confirmButtonText: 'Continua!',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // If the user confirms, continue
-                continueLinkCategory(node);
-            }
-        });
-    } else {
-        // If the node is not mapped, continue directly
-        continueLinkCategory(node);
-    }
-};
+// const handleLinkCategory = (node) => {
+//     if (node.data.mapped) {
+//         // Ask if the user wants to continue, losing previous mapping
+//         Swal.fire({
+//             title: 'Sei sicuro?',
+//             text: 'Sei sicuro di voler collegare la categoria? Le precedenti assegnazioni andranno perse',
+//             icon: 'warning',
+//             showCancelButton: true,
+//             confirmButtonColor: '#3085d6',
+//             cancelButtonColor: '#d33',
+//             cancelButtonText: 'Annulla',
+//             confirmButtonText: 'Continua!',
+//         }).then((result) => {
+//             if (result.isConfirmed) {
+//                 // If the user confirms, continue
+//                 continueLinkCategory(node);
+//             }
+//         });
+//     } else {
+//         // If the node is not mapped, continue directly
+//         continueLinkCategory(node);
+//     }
+// };
 
-const continueLinkCategory = (node) => {
+const handleLinkCategory = (node) => {
     let categoryId = node.data.categoryId;
 
     let nodeType = node.id.includes('j2') ? 'locale' : 'remota';

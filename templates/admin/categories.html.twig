@@ -30,7 +30,7 @@
 							{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 								<ul>
 									{% for remoteChildCategory in remoteCategory.x_children %}
-										<li data-category-id="{{ remoteChildCategory.id }}" data-jstree='{"opened": true}' data-mapped="{{ remoteChildCategory.x_mapped }}">
+										<li data-category-id="{{ remoteChildCategory.id }}" data-mapped="{{ remoteChildCategory.x_mapped }}">
 											{{ remoteChildCategory.name }}
 											{{ remoteChildCategory.x_mapped ? '✔️' : '' }}
 											{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
@@ -75,13 +75,13 @@
 							{% if localCategory.children is defined and localCategory.children|length > 0 %}
 								<ul>
 									{% for localChildCategory in localCategory.children %}
-										<li data-category-id="{{ localChildCategory.id_category }}" data-jstree='{"opened": true}' data-mapped="{{ localChildCategory.x_mapped }}">
+										<li data-category-id="{{ localChildCategory.id_category }}"  data-mapped="{{ localChildCategory.x_mapped }}">
 											{{ localChildCategory.name }}
 											{{ localChildCategory.x_mapped ? '✔️' : '' }}
 											{% if localChildCategory.children is defined and localChildCategory.children|length > 0 %}
 												<ul>
 													{% for localChild2 in localChildCategory.children %}
-														<li data-jstree='{"opened": true}' data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}">
+														<li  data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}">
 															{{ localChild2.name }}
 															{{ localChild2.x_mapped ? '✔️' : '' }}
 															{% if localChild2.children is defined and localChild2.children|length > 0 %}

@@ -132,7 +132,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
         ]);
 
 
-        if ($existingMapping) {
+        if ($existingMapping && $link_type == 'locale') {
             //if local category is already mapped to remote category, delete the mapping
             foreach ($existingMapping as $mapping) {
                 $em->remove($mapping);
