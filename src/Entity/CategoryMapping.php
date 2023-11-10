@@ -99,6 +99,11 @@ class CategoryMapping
     }
 
 
+    public function createMapping($idLocalCategory, $idRemoteCategory)
+    {
+        $this->setIdLocalCategory($idLocalCategory);
+        $this->setIdRemoteCategory($idRemoteCategory);
+    }
 
 
     /**

@@ -208,7 +208,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         $final_categories = [];
 
         foreach ($categories as $category) {
-            if (!isset($category['parent'])) {
+            if (!isset($category['parent_id'])) {
                 $category['x_children'] = $this->getChildren($category['id'], $categories, $mapped_local_categories);
                 if (in_array($category['id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
@@ -261,6 +261,43 @@ class ProductImporterController extends FrameworkBundleAdminController
     public function categoriesActionSync(Request $request)
     {
 
+        $l_categories = Category::getCategories(intval(Configuration::get('PS_LANG_DEFAULT')), true, false);
+$localCategorySlugs = array_map(function ($category) {
+    return pSQL($category['link_rewrite']);
+}, $l_categories);
+
+$remoteCategories = array();
+if (!empty($localCategorySlugs)) {
+    $sql = "SELECT * FROM ps_remote_categories WHERE slug IN ('" . implode("','", $localCategorySlugs) . "')";
+    $remoteCategories = Db::getInstance()->executeS($sql);
+}
+
+foreach ($l_categories as $l_category) {
+    $localCategoryId = (int) $l_category['id_category'];
+    $localCategorySlug = pSQL($l_category['link_rewrite']);
+
+    foreach ($remoteCategories as $remoteCategory) {
+        if ($remoteCategory['slug'] === $localCategorySlug) {
+            $remoteCategoryId = (int) $remoteCategory['id'];
+
+            $sql = "SELECT * FROM ps_category_mapping WHERE id_local_category = {$localCategoryId} AND id_remote_category = {$remoteCategoryId}";
+            $mapping = Db::getInstance()->executeS($sql);
+
+            if (!$mapping) {
+                $sql = "INSERT INTO ps_category_mapping (id_local_category, id_remote_category) VALUES ({$localCategoryId}, {$remoteCategoryId})";
+                Db::getInstance()->execute($sql);
+            }
+
+
+        }
+    }
+    }
+    return $this->json([
+        'success' => true,
+        'message' => 'Categories synced successfully',
+    ]);
+    
+
         //remove all the categories from the database, except the root and home categories
         $sql = "DELETE FROM ps_category WHERE id_category > 2";
         Db::getInstance()->execute($sql);
@@ -270,7 +307,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         Db::getInstance()->execute($sql);
 
 
-        $remote_categories = $this->orderRemoteCategories();
+        $remote_categories = $this->orderCategories($this->getRemoteCategories());
 
         foreach ($remote_categories as $remote_category) {
             $this->syncCategory($remote_category);
