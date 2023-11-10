@@ -22,7 +22,7 @@
 			data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
 				<ul>
 					{% for remoteCategory in remote_categories %}
-						<li data-jstree='{"opened": true}' data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}">
+						<li data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}" id="{{ remoteCategory.id }}" data-source="remote" >
 							<span>
 								{{ remoteCategory.name }}
 								{{ remoteCategory.x_mapped ? '✔️' : '' }}
@@ -30,13 +30,13 @@
 							{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 								<ul>
 									{% for remoteChildCategory in remoteCategory.x_children %}
-										<li data-category-id="{{ remoteChildCategory.id }}" data-mapped="{{ remoteChildCategory.x_mapped }}">
+										<li id="{{remoteChildCategory.id}}" data-category-id="{{ remoteChildCategory.id }}" data-mapped="{{ remoteChildCategory.x_mapped }}" data-source="remote">
 											{{ remoteChildCategory.name }}
 											{{ remoteChildCategory.x_mapped ? '✔️' : '' }}
 											{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
 												<ul>
 													{% for remoteChild2 in remoteChildCategory.x_children %}
-														<li data-category-id="{{ remoteChild2.id }}" data-jstree='' data-mapped="{{ remoteChild2.x_mapped }}">
+														<li id="{{remoteChild2.id}}"data-category-id="{{ remoteChild2.id }}" data-jstree='' data-mapped="{{ remoteChild2.x_mapped }}" data-source="remote">
 															{{ remoteChild2.name }}
 															{{ remoteChild2.x_mapped ? '✔️' : '' }}
 														</li>
@@ -69,26 +69,26 @@
 			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}">
 				<ul>
 					{% for localCategory in categories %}
-						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}" data-mapped="{{ localCategory.x_mapped }}">
+						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}" data-mapped="{{ localCategory.x_mapped }}" data-source="local">
 							{{ localCategory.name }}
 							{{ localCategory.x_mapped ? '✔️' : '' }}
 							{% if localCategory.children is defined and localCategory.children|length > 0 %}
 								<ul>
 									{% for localChildCategory in localCategory.children %}
-										<li data-category-id="{{ localChildCategory.id_category }}"  data-mapped="{{ localChildCategory.x_mapped }}">
+										<li id="{{localChildCategory.id_category}}"data-category-id="{{ localChildCategory.id_category }}"  data-mapped="{{ localChildCategory.x_mapped }}" data-source="local">
 											{{ localChildCategory.name }}
 											{{ localChildCategory.x_mapped ? '✔️' : '' }}
 											{% if localChildCategory.children is defined and localChildCategory.children|length > 0 %}
 												<ul>
 													{% for localChild2 in localChildCategory.children %}
-														<li  data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}">
+														<li id="{{localChild2.id_category}}" data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}" data-source="local">
 															{{ localChild2.name }}
 															{{ localChild2.x_mapped ? '✔️' : '' }}
 															{% if localChild2.children is defined and localChild2.children|length > 0 %}
 
 															<ul>
 																{% for localChild3 in localChild2.children %}
-																	<li data-category-id="{{ localChild3.id_category }}" data-mapped="{{ localChild3.x_mapped }}">
+																	<li id="{{localChild3.id_category}}" data-category-id="{{ localChild3.id_category }}" data-mapped="{{ localChild3.x_mapped }}" data-source="local">
 																		{{ localChild3.name }}
 																		{{ localChild3.x_mapped ? '✔️' : '' }}
 																	</li>

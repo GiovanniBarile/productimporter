@@ -6,7 +6,7 @@ const unlinkCategoryUrl = $('#local').data('unlink-category-url');
 // Define functions
 const initializeJsTree = () => {
     $('#local, #remote').jstree({
-        plugins: ['contextmenu'],
+        plugins: ['contextmenu','search'],
         contextmenu: {
             items: (node) => {
                 const mapped = node.data.mapped;
@@ -15,7 +15,8 @@ const initializeJsTree = () => {
                     getMappedCategories: {
                         label: 'Get mapped categories',
                         action: () => {
-                            if (node.id.includes('j2')) {
+                            //node.data-source = local or remote
+                            if (node.data.source == 'local') {
                                 getLocalMappedCategories(categoryId);
                             } else {
                                 getRemoteMappedCategories(categoryId);
@@ -92,29 +93,6 @@ const initializeJsTree = () => {
     });
 };
 
-// const handleLinkCategory = (node) => {
-//     if (node.data.mapped) {
-//         // Ask if the user wants to continue, losing previous mapping
-//         Swal.fire({
-//             title: 'Sei sicuro?',
-//             text: 'Sei sicuro di voler collegare la categoria? Le precedenti assegnazioni andranno perse',
-//             icon: 'warning',
-//             showCancelButton: true,
-//             confirmButtonColor: '#3085d6',
-//             cancelButtonColor: '#d33',
-//             cancelButtonText: 'Annulla',
-//             confirmButtonText: 'Continua!',
-//         }).then((result) => {
-//             if (result.isConfirmed) {
-//                 // If the user confirms, continue
-//                 continueLinkCategory(node);
-//             }
-//         });
-//     } else {
-//         // If the node is not mapped, continue directly
-//         continueLinkCategory(node);
-//     }
-// };
 
 const handleLinkCategory = (node) => {
     let categoryId = node.data.categoryId;
@@ -221,9 +199,25 @@ const getMappedCategories = (url, tree, categoryId) => {
             let mappedCategories = [];
 
             $.each(mappedCategoryIds, (index, mappedCategoryId) => {
-                mappedCategories.push(tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`)).text.replace('✔️', '').trim());
 
-                const node = tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`));
+
+                //find the node with the mappedCategoryId id in the tree 
+
+                // let node = tree.jstree(true).get_node(tree.find(`id="${mappedCategoryId}`); 
+                let node = tree.jstree(true).get_node(mappedCategoryId);
+
+                mappedCategories.push(node.text.replace('✔️', '').trim());
+
+                //open the parets if node is not visible and the parent is not the root node
+
+                node.parents.forEach((parentId) => {
+                    if (parentId != '#') {
+                        tree.jstree(true).open_node(parentId);
+                    }
+                }
+                );
+                // const node = tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`));
+
                 if (node) {
                     tree.jstree(true).select_node(node);
                     tree.jstree(true).set_icon(node, 'fas fa-check-circle');
@@ -241,12 +235,18 @@ const getMappedCategories = (url, tree, categoryId) => {
 const getLocalMappedCategories = (categoryId) => {
     const localMappedUrl = $('#local').data('get-local-mapped-categories-url');
     const tree = $('#remote');
-    const selectedNodes = tree.jstree(true).get_selected(true);
-    for (let i = 0; i < selectedNodes.length; i++) {
-        tree.jstree(true).deselect_node(selectedNodes[i]);
-        tree.jstree(true).set_icon(selectedNodes[i], '');
+    //if tree is closed, open the tree and get mapped categories
+    try{
+
+        const selectedNodes = tree.jstree(true).get_selected(true);
+        for (let i = 0; i < selectedNodes.length; i++) {
+            tree.jstree(true).deselect_node(selectedNodes[i]);
+            tree.jstree(true).set_icon(selectedNodes[i], '');
+        }
+        getMappedCategories(localMappedUrl, tree, categoryId);
+    }catch(e){
+        console.log(e);
     }
-    getMappedCategories(localMappedUrl, tree, categoryId);
 };
 
 const getRemoteMappedCategories = (categoryId) => {
