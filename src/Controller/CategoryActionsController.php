@@ -31,7 +31,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
             }
 
             $result = $remote_category_ids;
-
+            
             if ($result) {
                 return $this->json([
                     'success' => true,
@@ -62,6 +62,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
             $sql = "SELECT id_local_category FROM ps_category_mapping WHERE id_remote_category = $remote_category_id";
 
             $result = Db::getInstance()->executeS($sql);
+
             $mapped_names = [];
             //create array of remote category ids 
             $local_category_ids = array();
@@ -74,7 +75,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
             //return mapped names as string 
             $mapped_names = implode(', ', $mapped_names);
 
-            
+
             $result = $local_category_ids;
 
             if ($result) {

@@ -36,7 +36,6 @@ class CategoryCrudController extends FrameworkBundleAdminController
             $category->active = true;
 
             $category->add();
-
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
@@ -72,49 +71,64 @@ class CategoryCrudController extends FrameworkBundleAdminController
     // ActionDelete
     public function categoriesActionDelete(Request $request)
     {
-        $category_id = $request->get('category_id');
+        $category_ids = $request->get('category_id');
 
-        // Rimuovi la categoria da PrestaShop indipendentemente da tutto
-        $prestashopCategory = new Category($category_id);
-        if (!$prestashopCategory->delete()) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Failed to delete category from PrestaShop',
-            ]);
-        }
+        foreach ($category_ids as $category_id) {
+            // Rimuovi la categoria da PrestaShop indipendentemente da tutto
+            $prestashopCategory = new Category($category_id);
+            //check if the category exists, if exista delete it, if not, continue
+            if (!Category::categoryExists($prestashopCategory->name, $prestashopCategory->id_parent)) {
+                continue;
+            } else {
 
-        try{
+                //Check if the category has children, if it has, delete the mappings for the children
+                $sql = "SELECT id_category FROM ps_category WHERE id_parent = $category_id";
 
-            $em = $this->getDoctrine()->getManager();
-            //remove all associations from category_mapping
-            $categoryMapping = $em->getRepository(CategoryMapping::class)->findBy([
-                'idLocalCategory' => $category_id,
-            ]);
-            
-            
-            // Se esiste l'associazione in category_mapping, rimuovila
-            if ($categoryMapping) {
-                foreach ($categoryMapping as $mapping) {
-                    $em->remove($mapping);
+                $result = Db::getInstance()->executeS($sql);
+
+                if ($result) {
+                    foreach ($result as $row) {
+                        $sql = "DELETE FROM ps_category_mapping WHERE id_local_category = $row[id_category]";
+
+                        Db::getInstance()->execute($sql);
+                    }
                 }
-                $em->flush();
-            }
-        } catch (Exception $e) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Failed to delete category associations ' . $e->getMessage(),
-            ]);
-        }
 
+                //then delete the category
+            
+
+                if (!$prestashopCategory->delete()) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Failed to delete category from PrestaShop',
+                    ]);
+                }
+            }
+
+            try {
+                $em = $this->getDoctrine()->getManager();
+                // Rimuovi tutte le associazioni da category_mapping
+
+                $sql = "DELETE FROM ps_category_mapping WHERE id_local_category = $category_id";
+
+                $em->getConnection()->executeQuery($sql);
+            } catch (Exception $e) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Failed to delete category associations ' . $e->getMessage(),
+                ]);
+            }
+        }
 
         return $this->json([
             'success' => true,
-            'message' => 'Category deleted from PrestaShop and its associations removed if present',
+            'message' => 'Categories deleted from PrestaShop and their associations removed if present',
         ]);
     }
 
+
     // ActionGetParents
-    
+
     public function categoriesActionGetParents()
     {
         // Recupera un elenco di tutte le categorie
@@ -133,5 +147,4 @@ class CategoryCrudController extends FrameworkBundleAdminController
             'categories' => $categoryList,
         ]);
     }
-  
 }
