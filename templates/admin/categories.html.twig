@@ -18,8 +18,10 @@
 			<div class="d-flex justify-content-between mb-3 flex-column mt-4">
 				<h1 class="m-0 p-0">Remote Categories</h1>
 			</div>
-			<div id="remote" class="demo" 
-			data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
+			{# productimporter-get-remote-category-tree #}
+			<div id="remote" data-remote-url="{{path('productimporter-get-remote-category-tree')}}" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
+			</div>
+			{# <div id="remote" class="demo" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
 				<ul>
 					{% for remoteCategory in remote_categories %}
 						<li data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}" id="{{ remoteCategory.id }}" data-source="remote" >
@@ -50,7 +52,7 @@
 						</li>
 					{% endfor %}
 				</ul>
-			</div>
+			</div> #}
 		</div>
 
 		<div class="w-50 overflow-auto pl-2">

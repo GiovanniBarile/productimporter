@@ -73,6 +73,7 @@ const linkCategoryCall = (type, selectedCategory, data) => {
         if (data.success) {
             $('#linkCategoryModal').modal('hide');
             // window.location.reload();
+            $('#remote').jstree(true).refresh();
         }
     });
 };

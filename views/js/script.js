@@ -5,8 +5,8 @@ const linkCategoryUrl = $('#local').data('link-category-url');
 const unlinkCategoryUrl = $('#local').data('unlink-category-url');
 // Define functions
 const initializeJsTree = () => {
-    $('#local, #remote').jstree({
-        plugins: ['contextmenu','search', 'sort'],
+    $('#local').jstree({
+        plugins: ['contextmenu', 'search', 'sort'],
         contextmenu: {
             items: (node) => {
                 const mapped = node.data.mapped;
@@ -56,7 +56,7 @@ const initializeJsTree = () => {
                     deleteCategory: {
                         label: 'Delete category',
                         action: () => {
-                            
+
                             //get all selected nodes
                             var allNodes = $('#local').jstree(true).get_json('#', { flat: true });
                             //create an array of selected nodes
@@ -96,7 +96,7 @@ const initializeJsTree = () => {
                     delete items.getMappedCategories;
                 }
 
-                if(node.text.trim() == ('Home')){
+                if (node.text.trim() == ('Home')) {
                     //can't do anything
                     delete items.editCategory;
                     delete items.deleteCategory;
@@ -119,20 +119,80 @@ const initializeJsTree = () => {
             },
 
         },
-        'sort' : function(a, b) {
+        'sort': function (a, b) {
             return this.get_text(a).toLowerCase() > this.get_text(b).toLowerCase() ? 1 : -1;
-            
-        }    
+
+        }
+    });
+
+
+    //initialize #remote tree for ajax
+    $('#remote').jstree({
+        'core': {
+            'data': {
+                'url': $('#remote').data('remote-url'),
+                'data': function (node) {
+                    return {
+                        'id': node.id,
+                        'text': node.text,
+                        'data': node.data,
+
+                    };
+                },
+            },
+            'check_callback': true,
+        },
+        'plugins': ['contextmenu', 'search', 'sort'],
+
+        contextmenu: {
+            items: (node) => {
+                console.log(node);
+                const mapped = node.data.mapped || false;
+                const categoryId = node.id;
+                const items = {
+                    getMappedCategories: {
+                        label: 'Get mapped categories',
+                        action: () => {
+                            getLocalMappedCategories(categoryId);
+                        },
+                    },
+                    linkCategory: {
+                        label: 'Link category',
+                        action: () => {
+                            handleLinkCategory(node, 'remota');
+                        },
+                    },
+                    unlinkCategory: {
+                        label: 'Unlink category',
+                        action: () => {
+                            handleUnlinkCategory(node, 'remota');
+                        },
+                    },
+                };
+
+
+                if (mapped) {
+                    delete items.linkCategory;
+                } else {
+                    delete items.unlinkCategory;
+                    delete items.getMappedCategories;
+                }
+                return items;
+            },
+
+        },
     });
 };
 
 
-const handleLinkCategory = (node) => {
-    
-    let categoryId = node.data.categoryId;
-    let nodeType = node.data.source ==  ('local') ? 'locale' : 'remota';
+
+const handleLinkCategory = (node, type) => {
+
+
+    let categoryId = node.id;
+    let nodeType = type;
     let modal = $('#linkCategoryModal');
-    //set data-category-type attribute to modal 
+    // //set data-category-type attribute to modal 
     modal.attr('data-category-type', nodeType);
     modal.attr('data-category-id', categoryId);
 
@@ -177,9 +237,9 @@ const handleLinkCategory = (node) => {
 
 };
 
-const handleUnlinkCategory = (node) => {
-    let categoryId = node.data.categoryId;
-    let nodeType = node.id.includes('j2') ? 'locale' : 'remota';
+const handleUnlinkCategory = (node, type) => {
+    let categoryId = node.id;
+    let nodeType = type;
     let unlinkCategoryUrl = $('#categoriesPage').data('unlink-category-url');
 
 
@@ -198,14 +258,15 @@ const handleUnlinkCategory = (node) => {
             $.ajax({
                 url: unlinkCategoryUrl,
                 type: 'POST',
-                data: { 
+                data: {
                     type: nodeType,
-                    category_id: categoryId 
-                    
+                    category_id: categoryId
+
                 },
                 success: () => {
                     Swal.fire('Fatto!', 'La categoria è stata scollegata con successo.', 'success');
-                    window.location.reload();
+                    
+                    type == 'locale' ? $('#local').jstree(true).refresh() : $('#remote').jstree(true).refresh();
                 },
                 fail: () => {
                     Swal.fire('Errore!', 'Si è verificato un errore durante lo scollegamento della categoria.', 'error');
@@ -269,7 +330,7 @@ const getLocalMappedCategories = (categoryId) => {
     const localMappedUrl = $('#local').data('get-local-mapped-categories-url');
     const tree = $('#remote');
     //if tree is closed, open the tree and get mapped categories
-    try{
+    try {
 
         const selectedNodes = tree.jstree(true).get_selected(true);
         for (let i = 0; i < selectedNodes.length; i++) {
@@ -277,13 +338,14 @@ const getLocalMappedCategories = (categoryId) => {
             tree.jstree(true).set_icon(selectedNodes[i], '');
         }
         getMappedCategories(localMappedUrl, tree, categoryId);
-    }catch(e){
+    } catch (e) {
         console.log(e);
     }
 };
 
 const getRemoteMappedCategories = (categoryId) => {
     const remoteMappedUrl = $('#remote').data('get-remote-mapped-categories-url');
+
     const tree = $('#local');
     const selectedNodes = tree.jstree(true).get_selected(true);
     for (let i = 0; i < selectedNodes.length; i++) {

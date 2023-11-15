@@ -7,7 +7,7 @@ use Configuration;
 use Db;
 use Exception;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
-use ProductImporter\Entity\CategoryMapping;
+
 use ProductImporter\Entity\RemoteCategories;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,7 +22,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         //convert to jstree format
         $remote_categories = $this->convertToJstreeFormat($remote_categories);
 
-
+        
 
         // dd($existing_categories);
         return $this->json(
@@ -39,9 +39,10 @@ class TreeInitializationController extends FrameworkBundleAdminController
             $jstree_category['id'] = $category['original_id'];
             $jstree_category['text'] = $category['name'];
             $jstree_category['children'] = [];
-    
+            $jstree_category['data'] = ['mapped' => false ?? false];
             // Controllo per verificare se l'attributo "x_mapped" è true
             if (isset($category['x_mapped']) && $category['x_mapped'] === true) {
+                $jstree_category['data'] = ['mapped' => true ?? false];
                 $jstree_category['icon'] = 'far fa-check-circle'; // Imposta l'icona della spunta
             }
     
@@ -54,6 +55,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
     
                     // Controllo anche per i figli
                     if (isset($child['x_mapped']) && $child['x_mapped'] === true) {
+                        $jstree_child['data'] = ['mapped' => true ?? false];
                         $jstree_child['icon'] = 'far fa-check-circle'; // Imposta l'icona della spunta
                     }
     
@@ -66,6 +68,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
     
                             // Controllo anche per i nipoti
                             if (isset($grandchild['x_mapped']) && $grandchild['x_mapped'] === true) {
+                                $jstree_grandchild['data'] = ['mapped' => true ?? false];
                                 $jstree_grandchild['icon'] = 'far fa-check-circle'; // Imposta l'icona della spunta
                             }
     
@@ -140,6 +143,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
     public function orderCategories($categories)
     {
 
+        // dd($categories);
         $sql = "SELECT `id_remote_category` FROM ps_category_mapping GROUP BY id_remote_category";
         $mapped_local_categories = Db::getInstance()->executeS($sql);
         $mapped_local_categories = array_column($mapped_local_categories, 'id_remote_category');
@@ -149,7 +153,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         //foreach category, if parent_id == null, add it to the ordered_categories array
         foreach ($categories as $category) {
             if ($category['parent_id'] == null) {
-                if (in_array($category['id'], $mapped_local_categories)) {
+                if (in_array($category['original_id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
                 } else {
                     $category['x_mapped'] = false;
@@ -162,7 +166,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         foreach ($ordered_categories as &$ordered_category) {
             foreach ($categories as $category) {
                 if ($category['parent_id'] == $ordered_category['original_id']) {
-                    if (in_array($category['id'], $mapped_local_categories)) {
+                    if (in_array($category['original_id'], $mapped_local_categories)) {
                         $category['x_mapped'] = true;
                     } else {
                         $category['x_mapped'] = false;
@@ -175,7 +179,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
                 foreach ($ordered_category['x_children'] as &$child) {
                     foreach ($categories as $category) {
                         if ($category['parent_id'] == $child['original_id']) {
-                            if (in_array($category['id'], $mapped_local_categories)) {
+                            if (in_array($category['original_id'], $mapped_local_categories)) {
                                 $category['x_mapped'] = true;
                             } else {
                                 $category['x_mapped'] = false;
