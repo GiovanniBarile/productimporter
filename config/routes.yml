@@ -103,3 +103,13 @@ productimporter-categories-sync:
     methods: [POST]
     defaults:
       _controller: 'ProductImporter\Controller\ProductImporterController:categoriesActionSync'
+
+
+#Tree Initialization
+
+productimporter-get-remote-category-tree:
+    path: productimporter/categories/remote-tree
+    methods: [GET]
+    defaults:
+      _controller: 'ProductImporter\Controller\TreeInitializationController:remoteCategoryTree'
+
