@@ -87,6 +87,15 @@ const initializeJsTree = () => {
                     delete items.deleteCategory;
                 }
 
+                //if node is remote and more than one node is selected, don't show anything
+                if (node.data.source == 'remote' && $('#remote').jstree(true).get_selected().length > 1) {
+                    delete items.editCategory;
+                    delete items.deleteCategory;
+                    delete items.linkCategory;
+                    delete items.unlinkCategory;
+                    delete items.getMappedCategories;
+                }
+
                 if(node.text.trim() == ('Home')){
                     //can't do anything
                     delete items.editCategory;
@@ -104,8 +113,11 @@ const initializeJsTree = () => {
                     delete items.getMappedCategories;
                 }
 
+
+
                 return items;
             },
+
         },
         'sort' : function(a, b) {
             return this.get_text(a).toLowerCase() > this.get_text(b).toLowerCase() ? 1 : -1;
