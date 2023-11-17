@@ -113,3 +113,9 @@ productimporter-get-remote-category-tree:
     defaults:
       _controller: 'ProductImporter\Controller\TreeInitializationController:remoteCategoryTree'
 
+productimporter-get-local-category-tree:
+    path: productimporter/categories/local-tree
+    methods: [GET]
+    defaults:
+      _controller: 'ProductImporter\Controller\TreeInitializationController:localCategoryTree'
+

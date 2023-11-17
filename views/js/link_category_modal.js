@@ -32,6 +32,7 @@ const checkIfSomethingIsSelected = () => {
 }
 
 
+
 const linkCategoriesAction = () => {
     //get data-category-type from modal
     let categoryType = $('#linkCategoryModal').data('category-type');
@@ -74,6 +75,7 @@ const linkCategoryCall = (type, selectedCategory, data) => {
             $('#linkCategoryModal').modal('hide');
             // window.location.reload();
             $('#remote').jstree(true).refresh();
+            $('#local').jstree(true).refresh();
         }
     });
 };

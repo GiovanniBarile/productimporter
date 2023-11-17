@@ -10,8 +10,7 @@ $(document).ready(function () {
         $.post(url, formData, function (data) {
             if (data.success) {
                 $('#addCategoryModal').modal('hide');
-
-                window.location.reload();
+                $('#local').jstree(true).refresh();
             }
         });
     });
@@ -42,7 +41,8 @@ $(document).ready(function () {
             $.post(url, formData, function (data) {
                 if (data.success) {
                     $('#editCategoryModal').modal('hide');
-                    window.location.reload();
+                    // window.location.reload();
+                    $('#local').jstree(true).refresh();
                 }
             });
         });

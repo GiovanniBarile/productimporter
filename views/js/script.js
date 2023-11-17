@@ -5,29 +5,40 @@ const linkCategoryUrl = $('#local').data('link-category-url');
 const unlinkCategoryUrl = $('#local').data('unlink-category-url');
 // Define functions
 const initializeJsTree = () => {
+
+
     $('#local').jstree({
+        'core': {
+            'data': {
+                'url': $('#local').data('local-url'),
+                'data': function (node) {
+                    return {
+                        'id': node.id,
+                        'text': node.text,
+                        'data': node.data,
+                    };
+                },
+            },
+            'check_callback': true,
+        },
+
         plugins: ['contextmenu', 'search', 'sort'],
         contextmenu: {
             items: (node) => {
                 const mapped = node.data.mapped;
-                const categoryId = node.data.categoryId;
+                const categoryId = node.id;
                 const items = {
                     getMappedCategories: {
                         label: 'Get mapped categories',
                         action: () => {
-                            //node.data-source = local or remote
-                            if (node.data.source == 'local') {
                                 getLocalMappedCategories(categoryId);
-                            } else {
-                                getRemoteMappedCategories(categoryId);
-                            }
                         },
                     },
 
                     linkCategory: {
                         label: 'Link category',
                         action: () => {
-                            handleLinkCategory(node);
+                            handleLinkCategory(node, 'locale');
                         },
                     },
 
@@ -35,7 +46,7 @@ const initializeJsTree = () => {
                     unlinkCategory: {
                         label: 'Unlink category',
                         action: () => {
-                            handleUnlinkCategory(node);
+                            handleUnlinkCategory(node, 'locale');
                         },
                     },
 
@@ -44,8 +55,8 @@ const initializeJsTree = () => {
                         label: 'Edit category',
                         action: () => {
                             let modal = $('#editCategoryModal');
-                            let oldCategory = node.text.replace('✔️', '').trim();
-                            let categoryId = node.data.categoryId;
+                            let oldCategory = node.text;
+                            let categoryId = node.id;
                             modal.find('#oldCategoryName').val(oldCategory);
                             let saveButton = modal.find('#saveEditedCategory');
                             saveButton.attr('data-category-id', categoryId);
@@ -63,7 +74,7 @@ const initializeJsTree = () => {
                             let selectedNodes = [];
                             for (let i = 0; i < allNodes.length; i++) {
                                 if (allNodes[i].state.selected) {
-                                    selectedNodes.push(allNodes[i].data.categoryId);
+                                    selectedNodes.push(allNodes[i].id);
                                 }
                             }
 
@@ -121,7 +132,6 @@ const initializeJsTree = () => {
         },
         'sort': function (a, b) {
             return this.get_text(a).toLowerCase() > this.get_text(b).toLowerCase() ? 1 : -1;
-
         }
     });
 
@@ -143,7 +153,9 @@ const initializeJsTree = () => {
             'check_callback': true,
         },
         'plugins': ['contextmenu', 'search', 'sort'],
-
+        'sort': function (a, b) {
+            return this.get_text(a).toLowerCase() > this.get_text(b).toLowerCase() ? 1 : -1;
+        },
         contextmenu: {
             items: (node) => {
                 console.log(node);
@@ -153,7 +165,7 @@ const initializeJsTree = () => {
                     getMappedCategories: {
                         label: 'Get mapped categories',
                         action: () => {
-                            getLocalMappedCategories(categoryId);
+                            getRemoteMappedCategories(categoryId);
                         },
                     },
                     linkCategory: {
@@ -169,17 +181,20 @@ const initializeJsTree = () => {
                         },
                     },
                 };
-
-
                 if (mapped) {
                     delete items.linkCategory;
                 } else {
                     delete items.unlinkCategory;
                     delete items.getMappedCategories;
                 }
+                //if more than one node is selected, don't show anything
+                if ($('#remote').jstree(true).get_selected().length > 1) {
+                    delete items.linkCategory;
+                    delete items.unlinkCategory;
+                    delete items.getMappedCategories;
+                }
                 return items;
             },
-
         },
     });
 };
@@ -187,14 +202,11 @@ const initializeJsTree = () => {
 
 
 const handleLinkCategory = (node, type) => {
-
-
     let categoryId = node.id;
     let nodeType = type;
     let modal = $('#linkCategoryModal');
     // //set data-category-type attribute to modal 
     modal.attr('data-category-type', nodeType);
-    modal.attr('data-category-id', categoryId);
 
     modal.find('#modal-label').text(`Collega categoria ${nodeType}`);
     modal.find('#selectedCategory').val(function () {
@@ -204,7 +216,7 @@ const handleLinkCategory = (node, type) => {
             console.log(selectedNodes);
             let selectedCategories = [];
             for (let i = 0; i < selectedNodes.length; i++) {
-                selectedCategories.push(selectedNodes[i].text.replace('✔️', '').trim());
+                selectedCategories.push(selectedNodes[i].text);
             }
             return selectedCategories.join(', ');
         }
@@ -212,10 +224,18 @@ const handleLinkCategory = (node, type) => {
             let selectedNodes = $('#local').jstree(true).get_selected(true);
 
             let selectedCategories = [];
+            let selectedIds = [];
 
             for (let i = 0; i < selectedNodes.length; i++) {
-                selectedCategories.push(selectedNodes[i].text.replace('✔️', '').trim());
+                selectedCategories.push(selectedNodes[i].text);
             }
+
+            for (let i = 0; i < selectedNodes.length; i++) {
+                selectedIds.push(selectedNodes[i].id);
+            }
+
+            modal.attr('data-category-id', selectedIds);
+
             return selectedCategories.join(', ');
         }
     }
@@ -265,8 +285,10 @@ const handleUnlinkCategory = (node, type) => {
                 },
                 success: () => {
                     Swal.fire('Fatto!', 'La categoria è stata scollegata con successo.', 'success');
-                    
-                    type == 'locale' ? $('#local').jstree(true).refresh() : $('#remote').jstree(true).refresh();
+                    //refresh all trees
+                    $('#local').jstree(true).refresh();
+                    $('#remote').jstree(true).refresh();
+                    // type == 'locale' ? $('#local').jstree(true).refresh() : $('#remote').jstree(true).refresh();
                 },
                 fail: () => {
                     Swal.fire('Errore!', 'Si è verificato un errore durante lo scollegamento della categoria.', 'error');
@@ -300,21 +322,29 @@ const getMappedCategories = (url, tree, categoryId) => {
                 // let node = tree.jstree(true).get_node(tree.find(`id="${mappedCategoryId}`); 
                 let node = tree.jstree(true).get_node(mappedCategoryId);
 
-                mappedCategories.push(node.text.replace('✔️', '').trim());
+                mappedCategories.push(node.text);
 
                 //open the parets if node is not visible and the parent is not the root node
-
-                node.parents.forEach((parentId) => {
-                    if (parentId != '#') {
-                        tree.jstree(true).open_node(parentId);
+                console.log(node);
+                if (node.parents && node.parents.length > 0) {
+                    node.parents.forEach((parentId) => {
+                        if (parentId != '#') {
+                            tree.jstree(true).open_node(parentId);
+                        }
                     }
+                    );
                 }
-                );
+                // node.parents.forEach((parentId) => {
+                //     if (parentId != '#') {
+                //         tree.jstree(true).open_node(parentId);
+                //     }
+                // }
+                // );
                 // const node = tree.jstree(true).get_node(tree.find(`[data-category-id="${mappedCategoryId}"]`));
 
                 if (node) {
                     tree.jstree(true).select_node(node);
-                    tree.jstree(true).set_icon(node, 'fas fa-check-circle');
+                    // tree.jstree(true).set_icon(node, 'fas fa-check-circle');
                 }
             });
             $('#' + tree.attr('id') + 'LinkedCategories').val(mappedCategories.join(', '));
@@ -335,7 +365,7 @@ const getLocalMappedCategories = (categoryId) => {
         const selectedNodes = tree.jstree(true).get_selected(true);
         for (let i = 0; i < selectedNodes.length; i++) {
             tree.jstree(true).deselect_node(selectedNodes[i]);
-            tree.jstree(true).set_icon(selectedNodes[i], '');
+            // tree.jstree(true).set_icon(selectedNodes[i], '');
         }
         getMappedCategories(localMappedUrl, tree, categoryId);
     } catch (e) {
@@ -350,7 +380,7 @@ const getRemoteMappedCategories = (categoryId) => {
     const selectedNodes = tree.jstree(true).get_selected(true);
     for (let i = 0; i < selectedNodes.length; i++) {
         tree.jstree(true).deselect_node(selectedNodes[i]);
-        tree.jstree(true).set_icon(selectedNodes[i], '');
+        // tree.jstree(true).set_icon(selectedNodes[i], '');
     }
     getMappedCategories(remoteMappedUrl, tree, categoryId);
 };
@@ -374,6 +404,10 @@ const deleteCategory = (categoryId) => {
                 type: 'POST',
                 data: { category_id: categoryId },
                 // success: () => window.location.reload(),
+                success: () => { $('#local').jstree(true).refresh(); },
+                fail: () => {
+                    Swal.fire('Errore!', 'Si è verificato un errore durante l\'eliminazione della categoria.', 'error');
+                },
             });
         }
     });
@@ -423,32 +457,6 @@ $(document).ready(() => {
         });
     });
 
-    //if click on remote or local tree, and there are selected nodes, deselect them and remove check icon
-    $('#local, #remote').on('click.jstree', function (e) {
-        //reset linked categories input
-        $('#remoteLinkedCategories, #localLinkedCategories').val('');
-        //change the opposite tree
-        if (e.currentTarget.id == 'local') {
-            //get all selected nodes
-            var allNodes = $('#remote').jstree(true).get_json('#', { flat: true });
-            //deselect all selected nodes
-            for (let i = 0; i < allNodes.length; i++) {
-                $('#remote').jstree(true).deselect_node(allNodes[i]);
-                $('#remote').jstree(true).set_icon(allNodes[i], '');
-            }
-            //reset ALL icons in local tree
-            $('#local').jstree(true).set_icon('j1_1', '');
-        } else {
-            //get all nodes
-            var allNodes = $('#local').jstree(true).get_json('#', { flat: true });
-            //deselect all selected nodes
-            for (let i = 0; i < allNodes.length; i++) {
-                $('#local').jstree(true).deselect_node(allNodes[i]);
-                $('#local').jstree(true).set_icon(allNodes[i], '');
-            }
-
-        }
-    });
 
 
     $('#syncButton').on('click', function () {

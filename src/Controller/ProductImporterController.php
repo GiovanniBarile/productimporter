@@ -152,7 +152,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         //foreach category, if parent_id == null, add it to the ordered_categories array
         foreach ($categories as $category) {
             if ($category['parent_id'] == null) {
-                if (in_array($category['id'], $mapped_local_categories)) {
+                if (in_array($category['original_id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
                 } else {
                     $category['x_mapped'] = false;
@@ -165,7 +165,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         foreach ($ordered_categories as &$ordered_category) {
             foreach ($categories as $category) {
                 if ($category['parent_id'] == $ordered_category['original_id']) {
-                    if (in_array($category['id'], $mapped_local_categories)) {
+                    if (in_array($category['original_id'], $mapped_local_categories)) {
                         $category['x_mapped'] = true;
                     } else {
                         $category['x_mapped'] = false;
@@ -178,7 +178,7 @@ class ProductImporterController extends FrameworkBundleAdminController
                 foreach ($ordered_category['x_children'] as &$child) {
                     foreach ($categories as $category) {
                         if ($category['parent_id'] == $child['original_id']) {
-                            if (in_array($category['id'], $mapped_local_categories)) {
+                            if (in_array($category['original_id'], $mapped_local_categories)) {
                                 $category['x_mapped'] = true;
                             } else {
                                 $category['x_mapped'] = false;

@@ -14,21 +14,75 @@ use Symfony\Component\HttpFoundation\Request;
 class TreeInitializationController extends FrameworkBundleAdminController
 {
 
+
+    public function LocalCategoryTree(Request $request)
+    {
+        $existing_categories = Category::getNestedCategories();
+        $sql = "SELECT `id_local_category` FROM ps_category_mapping GROUP BY id_local_category";
+        $mapped_local_categories = Db::getInstance()->executeS($sql);
+        $mapped_local_categories = array_column($mapped_local_categories, 'id_local_category');
+
+        function markMappedCategories(&$categories, $mapped_local_categories)
+        {
+            foreach ($categories as &$category) {
+                $category['x_mapped'] = in_array($category['id_category'], $mapped_local_categories);
+                if (isset($category['children'])) {
+                    markMappedCategories($category['children'], $mapped_local_categories);
+                }
+            }
+        }
+
+        markMappedCategories($existing_categories, $mapped_local_categories);
+        
+        $converted_categories = $this->convertToJstreeFormatRecursive($existing_categories);
+
+        return $this->json(
+            [
+                $converted_categories[0]
+            ]
+        );
+    }
+
+    public function convertToJstreeFormatRecursive($categories){
+        $jstree_categories = [];
+    
+        foreach ($categories as $category) {
+            $jstree_category = $this->convertCategoryToJstree($category);
+            $jstree_categories[] = $jstree_category;
+        }
+    
+        return $jstree_categories;
+    }
+    
+    private function convertCategoryToJstree($category) {
+        $jstree_category = [];
+        $jstree_category['id'] = $category['id_category'];
+        $jstree_category['text'] = $category['name'];
+        $jstree_category['children'] = [];
+        $jstree_category['data'] = ['mapped' => $category['x_mapped'] ?? false];
+        $jstree_category['icon'] = $category['x_mapped'] ? 'far fa-check-circle' : '';
+        $jstree_category['state'] = ['opened' => true];
+    
+        if (isset($category['children'])) {
+            foreach ($category['children'] as $child) {
+                $jstree_child = $this->convertCategoryToJstree($child);
+                $jstree_category['children'][] = $jstree_child;
+            }
+        }
+    
+        return $jstree_category;
+    }
+    
+
+
     public function RemoteCategoryTree(Request $request){
 
         $remote_categories = $this->getRemoteCategories();
-
         // dd($remote_categories);
-        //convert to jstree format
         $remote_categories = $this->convertToJstreeFormat($remote_categories);
-
-        
-
-        // dd($existing_categories);
         return $this->json(
             $remote_categories
         );
-
     }
 
     public function convertToJstreeFormat($categories)
@@ -36,7 +90,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         $jstree_categories = [];
         foreach ($categories as $category) {
             $jstree_category = [];
-            $jstree_category['id'] = $category['original_id'];
+            $jstree_category['id'] = $category['id'];
             $jstree_category['text'] = $category['name'];
             $jstree_category['children'] = [];
             $jstree_category['data'] = ['mapped' => false ?? false];
@@ -49,9 +103,10 @@ class TreeInitializationController extends FrameworkBundleAdminController
             if (isset($category['x_children'])) {
                 foreach ($category['x_children'] as $child) {
                     $jstree_child = [];
-                    $jstree_child['id'] = $child['original_id'];
+                    $jstree_child['id'] = $child['id'];
                     $jstree_child['text'] = $child['name'];
                     $jstree_child['children'] = [];
+                    $jstree_child['data'] = ['mapped' => false ?? false];
     
                     // Controllo anche per i figli
                     if (isset($child['x_mapped']) && $child['x_mapped'] === true) {
@@ -62,13 +117,14 @@ class TreeInitializationController extends FrameworkBundleAdminController
                     if (isset($child['x_children'])) {
                         foreach ($child['x_children'] as $grandchild) {
                             $jstree_grandchild = [];
-                            $jstree_grandchild['id'] = $grandchild['original_id'];
+                            $jstree_grandchild['id'] = $grandchild['id'];
                             $jstree_grandchild['text'] = $grandchild['name'];
                             $jstree_grandchild['children'] = [];
+                            $jstree_grandchild['data'] = ['mapped' => false ?? false];
     
                             // Controllo anche per i nipoti
                             if (isset($grandchild['x_mapped']) && $grandchild['x_mapped'] === true) {
-                                $jstree_grandchild['data'] = ['mapped' => true ?? false];
+                                $jstree_grandchild['data'] = ['mapped' => true ?? false] ;
                                 $jstree_grandchild['icon'] = 'far fa-check-circle'; // Imposta l'icona della spunta
                             }
     
@@ -153,7 +209,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         //foreach category, if parent_id == null, add it to the ordered_categories array
         foreach ($categories as $category) {
             if ($category['parent_id'] == null) {
-                if (in_array($category['original_id'], $mapped_local_categories)) {
+                if (in_array($category['id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
                 } else {
                     $category['x_mapped'] = false;
@@ -166,7 +222,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         foreach ($ordered_categories as &$ordered_category) {
             foreach ($categories as $category) {
                 if ($category['parent_id'] == $ordered_category['original_id']) {
-                    if (in_array($category['original_id'], $mapped_local_categories)) {
+                    if (in_array($category['id'], $mapped_local_categories)) {
                         $category['x_mapped'] = true;
                     } else {
                         $category['x_mapped'] = false;
@@ -179,7 +235,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
                 foreach ($ordered_category['x_children'] as &$child) {
                     foreach ($categories as $category) {
                         if ($category['parent_id'] == $child['original_id']) {
-                            if (in_array($category['original_id'], $mapped_local_categories)) {
+                            if (in_array($category['id'], $mapped_local_categories)) {
                                 $category['x_mapped'] = true;
                             } else {
                                 $category['x_mapped'] = false;
@@ -195,6 +251,9 @@ class TreeInitializationController extends FrameworkBundleAdminController
         // dd($ordered_categories);
         return $ordered_categories;
     }
+
+
+
 
     public function getConfig($key)
     {

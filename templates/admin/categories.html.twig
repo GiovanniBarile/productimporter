@@ -21,38 +21,6 @@
 			{# productimporter-get-remote-category-tree #}
 			<div id="remote" data-remote-url="{{path('productimporter-get-remote-category-tree')}}" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
 			</div>
-			{# <div id="remote" class="demo" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
-				<ul>
-					{% for remoteCategory in remote_categories %}
-						<li data-category-id="{{ remoteCategory.id }}" data-mapped="{{ remoteCategory.x_mapped }}" id="{{ remoteCategory.id }}" data-source="remote" >
-							<span>
-								{{ remoteCategory.name }}
-								{{ remoteCategory.x_mapped ? '✔️' : '' }}
-							</span>
-							{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
-								<ul>
-									{% for remoteChildCategory in remoteCategory.x_children %}
-										<li id="{{remoteChildCategory.id}}" data-category-id="{{ remoteChildCategory.id }}" data-mapped="{{ remoteChildCategory.x_mapped }}" data-source="remote">
-											{{ remoteChildCategory.name }}
-											{{ remoteChildCategory.x_mapped ? '✔️' : '' }}
-											{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
-												<ul>
-													{% for remoteChild2 in remoteChildCategory.x_children %}
-														<li id="{{remoteChild2.id}}"data-category-id="{{ remoteChild2.id }}" data-jstree='' data-mapped="{{ remoteChild2.x_mapped }}" data-source="remote">
-															{{ remoteChild2.name }}
-															{{ remoteChild2.x_mapped ? '✔️' : '' }}
-														</li>
-													{% endfor %}
-												</ul>
-											{% endif %}
-										</li>
-									{% endfor %}
-								</ul>
-							{% endif %}
-						</li>
-					{% endfor %}
-				</ul>
-			</div> #}
 		</div>
 
 		<div class="w-50 overflow-auto pl-2">
@@ -68,8 +36,10 @@
         </div>
 
 
-			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}">
-				<ul>
+			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}"
+				data-local-url="{{ path('productimporter-get-local-category-tree') }}"
+			>
+				{# <ul>
 					{% for localCategory in categories %}
 						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}" data-mapped="{{ localCategory.x_mapped }}" data-source="local">
 							{{ localCategory.name }}
@@ -107,7 +77,7 @@
 							{% endif %}
 						</li>
 					{% endfor %}
-				</ul>
+				</ul> #}
 			</div>
 		</div>
 	</div>

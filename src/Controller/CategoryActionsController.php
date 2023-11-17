@@ -140,7 +140,8 @@ class CategoryActionsController extends FrameworkBundleAdminController
             }
             $em->flush();
         }
-        is_string($selectedLocalCategoryIds) ? $selectedLocalCategoryIds = [$selectedLocalCategoryIds] : null;
+        //if it's comma separated string, turn it into an array
+        is_string($selectedLocalCategoryIds) ? $selectedLocalCategoryIds = explode(',', $selectedLocalCategoryIds) : null;
         
         foreach ($selectedLocalCategoryIds as $localCategory) {
             foreach ($selectedRemoteCategoryIds as $remoteCategory) {
