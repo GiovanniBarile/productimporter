@@ -61,7 +61,8 @@ class TreeInitializationController extends FrameworkBundleAdminController
         $jstree_category['children'] = [];
         $jstree_category['data'] = ['mapped' => $category['x_mapped'] ?? false];
         $jstree_category['icon'] = $category['x_mapped'] ? 'far fa-check-circle' : '';
-        $jstree_category['state'] = ['opened' => true];
+        //open only the first 2 levels
+        $jstree_category['state'] = ['opened' => $category['level_depth'] < 2];
     
         if (isset($category['children'])) {
             foreach ($category['children'] as $child) {
@@ -69,7 +70,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
                 $jstree_category['children'][] = $jstree_child;
             }
         }
-    
+        
         return $jstree_category;
     }
     

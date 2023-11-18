@@ -15,10 +15,16 @@ $(document).ready(function () {
         });
     });
 
+    $('#addCategoryModal').on('hidden.bs.modal', function () {
+        $(this).removeData('bs.modal');
+    }
+    );
+
 
 
     $('#editCategoryModal').on('show.bs.modal', function (event) {
         var modal = $(this);
+
         let saveButton = modal.find('#saveEditedCategory');
         let oldCategory = modal.find('#oldCategoryName').val();
         let categoryId = modal.find('#saveEditedCategory').data('category-id');

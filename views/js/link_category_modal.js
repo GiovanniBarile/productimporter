@@ -1,17 +1,22 @@
 $(document).ready(() => {
 
-
     // when modal is shown
+    var modal = $(this);
+
+
     $('#linkCategoryModal').on('show.bs.modal', function (event) {
 
-        //deselect all options in selectpicker
 
+
+        $('#remoteSelectPicker, #localSelectPicker').off('changed.bs.select');
+        
         $('#remoteSelectPicker').selectpicker('deselectAll');
         $('#localSelectPicker').selectpicker('deselectAll');
+        
         checkIfSomethingIsSelected();
         linkCategoriesAction();
     });
-});
+
 
 
 //check if something is selected
@@ -35,11 +40,12 @@ const checkIfSomethingIsSelected = () => {
 
 const linkCategoriesAction = () => {
     //get data-category-type from modal
-    let categoryType = $('#linkCategoryModal').data('category-type');
-    let selectedCategory = $('#linkCategoryModal').data('category-id');
+
+    let categoryType = $('#categoryType').val();
+    let selectedCategory = $('#categoryIds').val();
     //if categoryType is remote 
-    
-    $('#linkCategoryBtn').on('click', function () {
+
+    $('#linkCategoryBtn').off('click').on('click', function () {
         // get all selected options from selectpicker
         let selectedOptions = '';
         if (categoryType == 'remota') {
@@ -49,7 +55,7 @@ const linkCategoriesAction = () => {
         if (categoryType == 'locale') {
             selectedOptions = $('#remoteSelectPicker').val();
         }
-        
+
         linkCategoryCall(categoryType, selectedCategory, selectedOptions);
     });
 
@@ -58,13 +64,13 @@ const linkCategoriesAction = () => {
 
 const linkCategoryCall = (type, selectedCategory, data) => {
     let url = $('#linkCategoryModal').data('link-categories-url');
-    
+
 
     //TODO: controlla se sono già linkate
-    
+
     let formData = {
         type: type,
-        selectedCategory : selectedCategory,
+        selectedCategory: selectedCategory,
         data: JSON.stringify(data)
     };
 
@@ -80,3 +86,4 @@ const linkCategoryCall = (type, selectedCategory, data) => {
     });
 };
 
+});

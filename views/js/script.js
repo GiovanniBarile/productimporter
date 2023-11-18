@@ -31,7 +31,7 @@ const initializeJsTree = () => {
                     getMappedCategories: {
                         label: 'Get mapped categories',
                         action: () => {
-                                getLocalMappedCategories(categoryId);
+                            getLocalMappedCategories(categoryId);
                         },
                     },
 
@@ -202,7 +202,7 @@ const initializeJsTree = () => {
 
 
 const handleLinkCategory = (node, type) => {
-    let categoryId = node.id;
+
     let nodeType = type;
     let modal = $('#linkCategoryModal');
     // //set data-category-type attribute to modal 
@@ -213,16 +213,20 @@ const handleLinkCategory = (node, type) => {
         //foreach  selected node, get the text and append it to the input
         if (nodeType === 'remota') {
             let selectedNodes = $('#remote').jstree(true).get_selected(true);
-            console.log(selectedNodes);
+            
             let selectedCategories = [];
             for (let i = 0; i < selectedNodes.length; i++) {
                 selectedCategories.push(selectedNodes[i].text);
             }
+            
+            modal.find('#categoryType').val(nodeType);
+            modal.find('#categoryIds').val(selectedNodes[0].id);
+
+
             return selectedCategories.join(', ');
         }
         else {
             let selectedNodes = $('#local').jstree(true).get_selected(true);
-
             let selectedCategories = [];
             let selectedIds = [];
 
@@ -234,7 +238,8 @@ const handleLinkCategory = (node, type) => {
                 selectedIds.push(selectedNodes[i].id);
             }
 
-            modal.attr('data-category-id', selectedIds);
+            modal.find('#categoryType').val(nodeType);
+            modal.find('#categoryIds').val(selectedIds);
 
             return selectedCategories.join(', ');
         }
@@ -253,7 +258,9 @@ const handleLinkCategory = (node, type) => {
         modal.find('#linkCategoryRemote').addClass('d-none');
     }
 
-    $('#linkCategoryModal').modal('show');
+    // $('#linkCategoryModal').modal('show');
+    //open modal
+    modal.modal('show');
 
 };
 
