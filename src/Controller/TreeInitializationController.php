@@ -91,7 +91,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         $jstree_categories = [];
         foreach ($categories as $category) {
             $jstree_category = [];
-            $jstree_category['id'] = $category['id'];
+            $jstree_category['id'] = $category['original_id'];
             $jstree_category['text'] = $category['name'];
             $jstree_category['children'] = [];
             $jstree_category['data'] = ['mapped' => false ?? false];
@@ -104,7 +104,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
             if (isset($category['x_children'])) {
                 foreach ($category['x_children'] as $child) {
                     $jstree_child = [];
-                    $jstree_child['id'] = $child['id'];
+                    $jstree_child['id'] = $child['original_id'];
                     $jstree_child['text'] = $child['name'];
                     $jstree_child['children'] = [];
                     $jstree_child['data'] = ['mapped' => false ?? false];
@@ -118,7 +118,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
                     if (isset($child['x_children'])) {
                         foreach ($child['x_children'] as $grandchild) {
                             $jstree_grandchild = [];
-                            $jstree_grandchild['id'] = $grandchild['id'];
+                            $jstree_grandchild['id'] = $grandchild['original_id'];
                             $jstree_grandchild['text'] = $grandchild['name'];
                             $jstree_grandchild['children'] = [];
                             $jstree_grandchild['data'] = ['mapped' => false ?? false];
@@ -210,7 +210,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         //foreach category, if parent_id == null, add it to the ordered_categories array
         foreach ($categories as $category) {
             if ($category['parent_id'] == null) {
-                if (in_array($category['id'], $mapped_local_categories)) {
+                if (in_array($category['original_id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
                 } else {
                     $category['x_mapped'] = false;
@@ -223,7 +223,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
         foreach ($ordered_categories as &$ordered_category) {
             foreach ($categories as $category) {
                 if ($category['parent_id'] == $ordered_category['original_id']) {
-                    if (in_array($category['id'], $mapped_local_categories)) {
+                    if (in_array($category['original_id'], $mapped_local_categories)) {
                         $category['x_mapped'] = true;
                     } else {
                         $category['x_mapped'] = false;
@@ -236,7 +236,7 @@ class TreeInitializationController extends FrameworkBundleAdminController
                 foreach ($ordered_category['x_children'] as &$child) {
                     foreach ($categories as $category) {
                         if ($category['parent_id'] == $child['original_id']) {
-                            if (in_array($category['id'], $mapped_local_categories)) {
+                            if (in_array($category['original_id'], $mapped_local_categories)) {
                                 $category['x_mapped'] = true;
                             } else {
                                 $category['x_mapped'] = false;

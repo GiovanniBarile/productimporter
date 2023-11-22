@@ -21,6 +21,14 @@ productimporter-categories:
       _legacy_controller: 'AdminCategoryMapping'
       _legacy_link: 'AdminCategoryMapping'
 
+productimporter-import:
+    path: productimporter/import
+    methods: [GET]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:importProductsPageAction'
+      _legacy_controller: 'AdminProductImport'
+      _legacy_link: 'AdminProductImport'
+
 
 # START Category CRUD
 
@@ -118,4 +126,17 @@ productimporter-get-local-category-tree:
     methods: [GET]
     defaults:
       _controller: 'ProductImporter\Controller\TreeInitializationController:localCategoryTree'
+
+
+
+# END Tree Initialization
+
+#Product importer operations
+
+#Import products
+productimporter-import-products:
+    path: productimporter/products/import
+    methods: [POST]
+    defaults:
+      _controller: 'ProductImporter\Controller\ProductImporterController:importProductsAction'
 

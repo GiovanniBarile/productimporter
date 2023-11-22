@@ -21,7 +21,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
         try {
 
             $sql = "SELECT id_remote_category FROM ps_category_mapping WHERE id_local_category = $local_category_id";
-
+            // dd($sql);
             $result = Db::getInstance()->executeS($sql);
 
             //create array of remote category ids 

@@ -29,6 +29,12 @@ class ProductImporter extends Module
             'visible' => true,
             'parent_class_name' => 'AdminProductImporter', // Collega a 'AdminProductImporter'
         ],
+        [
+            'name' => 'Import products',
+            'class_name' => 'AdminProductImport',
+            'visible' => true,
+            'parent_class_name' => 'AdminProductImporter', // Collega a 'AdminProductImporter'
+        ],
 
     ];
     
@@ -118,6 +124,7 @@ class ProductImporter extends Module
         $this->context->controller->addJS($this->_path . 'views/js/script.js');
         $this->context->controller->addJS($this->_path . 'views/js/crud.js');
         $this->context->controller->addJS($this->_path . 'views/js/link_category_modal.js');
+        $this->context->controller->addJS($this->_path . 'views/js/product_importer.js');
     }
 
     // install db 

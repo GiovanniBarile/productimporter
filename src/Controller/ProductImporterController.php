@@ -5,10 +5,16 @@ namespace ProductImporter\Controller;
 use Category;
 use Configuration;
 use Db;
+use Hook;
+use Image;
+use ImageManager;
+use ImageType;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use Product;
 use ProductImporter\Entity\CategoryMapping;
 use ProductImporter\Entity\RemoteCategories;
 use ProductImporter\Forms\ConfigType;
+use Shop;
 use Symfony\Component\HttpFoundation\Request;
 
 
@@ -82,7 +88,11 @@ class ProductImporterController extends FrameworkBundleAdminController
         ]);
     }
 
+    public function importProductsPageAction()
+    {
 
+        return $this->render('@Modules/productimporter/templates/admin/import_products.html.twig');
+    }
 
 
     public function getRemoteCategories()
@@ -261,41 +271,40 @@ class ProductImporterController extends FrameworkBundleAdminController
     {
 
         $l_categories = Category::getCategories(intval(Configuration::get('PS_LANG_DEFAULT')), true, false);
-$localCategorySlugs = array_map(function ($category) {
-    return pSQL($category['link_rewrite']);
-}, $l_categories);
-
-$remoteCategories = array();
-if (!empty($localCategorySlugs)) {
-    $sql = "SELECT * FROM ps_remote_categories WHERE slug IN ('" . implode("','", $localCategorySlugs) . "')";
-    $remoteCategories = Db::getInstance()->executeS($sql);
-}
-
-foreach ($l_categories as $l_category) {
-    $localCategoryId = (int) $l_category['id_category'];
-    $localCategorySlug = pSQL($l_category['link_rewrite']);
-
-    foreach ($remoteCategories as $remoteCategory) {
-        if ($remoteCategory['slug'] === $localCategorySlug) {
-            $remoteCategoryId = (int) $remoteCategory['id'];
-
-            $sql = "SELECT * FROM ps_category_mapping WHERE id_local_category = {$localCategoryId} AND id_remote_category = {$remoteCategoryId}";
-            $mapping = Db::getInstance()->executeS($sql);
-
-            if (!$mapping) {
-                $sql = "INSERT INTO ps_category_mapping (id_local_category, id_remote_category) VALUES ({$localCategoryId}, {$remoteCategoryId})";
-                Db::getInstance()->execute($sql);
-            }
+        $localCategorySlugs = array_map(function ($category) {
+            return pSQL($category['link_rewrite']);
+        }, $l_categories);
 
 
+        $remoteCategories = array();
+        if (!empty($localCategorySlugs)) {
+            $sql = "SELECT * FROM ps_remote_categories WHERE slug IN ('" . implode("','", $localCategorySlugs) . "')";
+            $remoteCategories = Db::getInstance()->executeS($sql);
         }
-    }
-    }
-    return $this->json([
-        'success' => true,
-        'message' => 'Categories synced successfully',
-    ]);
-    
+
+        foreach ($l_categories as $l_category) {
+            $localCategoryId = (int) $l_category['id_category'];
+            $localCategorySlug = pSQL($l_category['link_rewrite']);
+
+            foreach ($remoteCategories as $remoteCategory) {
+                if ($remoteCategory['slug'] === $localCategorySlug) {
+                    $remoteCategoryId = (int) $remoteCategory['original_id'];
+
+                    $sql = "SELECT * FROM ps_category_mapping WHERE id_local_category = {$localCategoryId} AND id_remote_category = {$remoteCategoryId}";
+                    $mapping = Db::getInstance()->executeS($sql);
+
+                    if (!$mapping) {
+                        $sql = "INSERT INTO ps_category_mapping (id_local_category, id_remote_category) VALUES ({$localCategoryId}, {$remoteCategoryId})";
+                        Db::getInstance()->execute($sql);
+                    }
+                }
+            }
+        }
+        return $this->json([
+            'success' => true,
+            'message' => 'Categories synced successfully',
+        ]);
+
 
         //remove all the categories from the database, except the root and home categories
         $sql = "DELETE FROM ps_category WHERE id_category > 2";
@@ -339,5 +348,166 @@ foreach ($l_categories as $l_category) {
         // Aggiorna la categoria appena creata, in modo da poter avere l'ID corretto
         $category = new Category($categoryId);
         $category->update();
+    }
+
+
+    public function importProductsAction(Request $request)
+    {
+        $api_key = $this->getConfig('european_resource_api_key');
+        $url = 'https://product-api.europeansourcing.com/api/v1.1/search/scroll';
+        $input = '{
+            "lang": "it",
+            "limit": 50,
+            "search_handlers": [
+                ]
+        }';
+        $ch = curl_init();
+
+        // configure request with the API url,
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+        // Content-type, accept type, your token,
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/ld+json',
+            'Accept: application/ld+json',
+            'X-AUTH-TOKEN: ' . $api_key,
+        ));
+
+        // the request method (POST for the europeansourcing API),
+        curl_setopt($ch, CURLOPT_POST, 1);
+
+        // and the parameters to pass as POST
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
+
+        // Now, execute the request. $response contains the output JSON
+        $response = curl_exec($ch);
+
+        if (false === $response) {
+            echo 'Curl error: ' . curl_error($ch);
+            die();
+        }
+
+        // close connection
+        curl_close($ch);
+
+        $response = json_decode($response, true);
+        $products = $response['products'];
+        $counter = 0;
+
+        foreach ($products as $product) {
+            if ($counter == 5) {
+                break;
+            }
+            $this->importProduct($product);
+            $counter++;
+        }
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Products imported successfully',
+        ]);
+    }
+
+
+    public function importProduct($productData)
+    {
+        // Crea una nuova istanza di Product
+        $product = new Product();
+
+        // Imposta le proprietà del prodotto
+        $product->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['name']);
+        $product->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['slug']);
+        // Imposta le dimensioni
+        $product->width = $productData['variants'][0]['variant_sizes']['width'] ?? null;
+        $product->height = $productData['variants'][0]['variant_sizes']['height'] ?? null;
+        $product->depth = $productData['variants'][0]['variant_sizes']['length'] ?? null;
+
+        // Imposta la descrizione
+        $product->description = array(intval(Configuration::get('PS_LANG_DEFAULT')) =>   $productData['variants'][0]['raw_description']);
+
+        // Imposta il peso
+        $product->weight = isset($productData['variants'][0]['weight']) ? $productData['variants'][0]['weight'] : 0;
+
+        // Imposta il prezzo
+        $product->price =  isset($productData['variants'][0]['variant_prices'][0]['value']) ? $productData['variants'][0]['variant_prices'][0]['value'] : 0;
+
+        //imposta la quantità
+        $product->quantity = isset($productData['variants'][0]['stock']) ? $productData['variants'][0]['stock'] : 100;
+
+        //imposta quantità minimi e massimi
+
+        //Aggiungi le immagini
+
+        // Salva il prodotto
+        $product->add();
+        
+        $this->handleCategories($product, $productData);
+        // $this->addProductImages($product, $productData);
+
+    }
+
+
+    public function addProductImages($product, $productData)
+    {
+        $shops = Shop::getShops(true, null, true);
+        // Aggiungi le immagini
+        $img_counter = 0;
+        foreach ($productData['variants'][0]['variant_images'] as $img) {
+            $image = new Image();
+            $image->id_product = $product->id;
+            $image->position = Image::getHighestPosition($product->id) + 1;
+            $image->cover = ($img_counter == 0) ? true : false;
+            if (($image->validateFields(false, true)) === true && ($image->validateFieldsLang(false, true)) === true && $image->add()) {
+                $image->associateTo($shops);
+                if (!$this->uploadImage($product->id, $image->id, $img['url'])) {
+                    $image->delete();
+                }
+            }
+            $img_counter++;
+        }
+    }
+
+    function uploadImage($id_entity, $id_image = null, $imgUrl)
+    {
+        $tmpfile = tempnam(_PS_TMP_IMG_DIR_, 'ps_import');
+        $watermark_types = explode(',', Configuration::get('WATERMARK_TYPES'));
+        $image_obj = new Image((int)$id_image);
+        $path = $image_obj->getPathForCreation();
+        $imgUrl = str_replace(' ', '%20', trim($imgUrl));
+        // Evaluate the memory required to resize the image: if it's too big we can't resize it.
+        if (!ImageManager::checkImageMemoryLimit($imgUrl)) {
+            return false;
+        }
+        if (@copy($imgUrl, $tmpfile)) {
+            ImageManager::resize($tmpfile, $path . '.jpg');
+            $images_types = ImageType::getImagesTypes('products');
+            foreach ($images_types as $image_type) {
+                ImageManager::resize($tmpfile, $path . '-' . stripslashes($image_type['name']) . '.jpg', $image_type['width'], $image_type['height']);
+                if (in_array($image_type['id_image_type'], $watermark_types)) {
+                    Hook::exec('actionWatermark', array('id_image' => $id_image, 'id_product' => $id_entity));
+                }
+            }
+        } else {
+            unlink($tmpfile);
+            return false;
+        }
+        unlink($tmpfile);
+        return true;
+    }
+
+
+    function handleCategories($product, $productData)
+    {
+        $categories = $productData['categories'];
+        $em = $this->getDoctrine()->getManager();
+        foreach ($categories as $category) {
+            $categoryMapping = $em->getRepository(CategoryMapping::class)->findOneBy(['idRemoteCategory' => $category['id']]);
+            // dd($category, $categoryMapping);
+            if ($categoryMapping) {
+                $category = new Category($categoryMapping->getIdLocalCategory());
+                $product->addToCategories($category->id);
+            }
+        }
     }
 }
