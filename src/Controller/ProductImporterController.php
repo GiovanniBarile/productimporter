@@ -12,6 +12,7 @@ use ImageType;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Product;
 use ProductImporter\Entity\CategoryMapping;
+use ProductImporter\Entity\ImportStatus;
 use ProductImporter\Entity\RemoteCategories;
 use ProductImporter\Forms\ConfigType;
 use Shop;
@@ -357,7 +358,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         $url = 'https://product-api.europeansourcing.com/api/v1.1/search/scroll';
         $input = '{
             "lang": "it",
-            "limit": 50,
+            "limit": 100,
             "search_handlers": [
                 ]
         }';
@@ -396,9 +397,9 @@ class ProductImporterController extends FrameworkBundleAdminController
         $counter = 0;
 
         foreach ($products as $product) {
-            if ($counter == 5) {
-                break;
-            }
+            // if ($counter == 5) {
+            //     break;
+            // }
             $this->importProduct($product);
             $counter++;
         }
@@ -412,6 +413,14 @@ class ProductImporterController extends FrameworkBundleAdminController
 
     public function importProduct($productData)
     {
+
+        //check if product is already imported
+        $sql = "SELECT * FROM ps_import_status WHERE original_product_id = {$productData['id']}";
+        $result = Db::getInstance()->executeS($sql);
+        if ($result) {
+            return;
+        }
+
         // Crea una nuova istanza di Product
         $product = new Product();
 
@@ -443,6 +452,18 @@ class ProductImporterController extends FrameworkBundleAdminController
         $product->add();
         
         $this->handleCategories($product, $productData);
+        $importStatus = new ImportStatus();
+
+        $importStatus->setProductId($product->id);
+        $importStatus->setOriginalProductId($productData['id']);        
+        $importStatus->setPhotoImported(0);
+        $importStatus->setAttributesImported(0);
+        $importStatus->setStatus('pending');
+        $importStatus->setTimestamp(date('Y-m-d H:i:s'));
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($importStatus);
+        $em->flush();
+
         // $this->addProductImages($product, $productData);
 
     }

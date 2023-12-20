@@ -1,6 +1,5 @@
 <?php
 
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -78,10 +77,22 @@ class ProductImporter extends Module
             return false;
         }
 
+        if(!$this->registerHook('completeProductImportProcess')){
+            return false;
+        }
+
         return true;
     }
 
 
+    public function hookCompleteProductImportProcess(){
+        //create a file in the module directory
+        $file = fopen($this->_path . 'import_complete.txt', 'w');
+        fwrite($file, 'Import complete');
+        fclose($file);
+
+        
+    }
 
     public function uninstall()
     {
@@ -147,9 +158,22 @@ class ProductImporter extends Module
             PRIMARY KEY (`id`)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
             
+          //keep track of imported products, track product id, photo_imported, attributes_imported,  status, timestamp
+          $import_status_sql = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "import_status` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `product_id` int(11) NOT NULL,
+            `original_product_id` int(11) NOT NULL,
+            `photo_imported` tinyint(1) NOT NULL,
+            `attributes_imported` tinyint(1) NOT NULL,
+            `status` varchar(255) NOT NULL,
+            `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+
           try {
             Db::getInstance()->execute($product_mapping_sql);
             Db::getInstance()->execute($remote_categories_sql);
+            Db::getInstance()->execute($import_status_sql);
         } catch (Exception $e) {
             return false;
         }
@@ -163,9 +187,11 @@ class ProductImporter extends Module
     {
         $sql = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "category_mapping`";
         $sql2 = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "remote_categories`";
+        $sql3 = "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "import_status`";
         try {
             Db::getInstance()->execute($sql);
             Db::getInstance()->execute($sql2);
+            Db::getInstance()->execute($sql3);
         } catch (Exception $e) {
             return false;
         }
