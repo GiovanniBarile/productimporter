@@ -5,6 +5,7 @@ namespace ProductImporter\Controller;
 use Category;
 use Configuration;
 use Db;
+use Exception;
 use Hook;
 use Image;
 use ImageManager;
@@ -397,12 +398,31 @@ class ProductImporterController extends FrameworkBundleAdminController
         $counter = 0;
 
         foreach ($products as $product) {
-            // if ($counter == 5) {
-            //     break;
-            // }
+            if ($counter == 5) {
+                break;
+            }
             $this->importProduct($product);
             $counter++;
         }
+
+
+
+        try{
+
+            $this->dispatchHook('completeProductImportProcess', array(
+                'products' => $products,
+            ));
+            
+
+        }
+        catch(Exception $e){
+            echo $e->getMessage();
+            die(); 
+        }
+
+        // trigger hook to import product photos        registerHook('completeProductImportProcess')){
+        
+
 
         return $this->json([
             'success' => true,
@@ -450,12 +470,12 @@ class ProductImporterController extends FrameworkBundleAdminController
 
         // Salva il prodotto
         $product->add();
-        
+
         $this->handleCategories($product, $productData);
         $importStatus = new ImportStatus();
 
         $importStatus->setProductId($product->id);
-        $importStatus->setOriginalProductId($productData['id']);        
+        $importStatus->setOriginalProductId($productData['id']);
         $importStatus->setPhotoImported(0);
         $importStatus->setAttributesImported(0);
         $importStatus->setStatus('pending');
@@ -463,58 +483,6 @@ class ProductImporterController extends FrameworkBundleAdminController
         $em = $this->getDoctrine()->getManager();
         $em->persist($importStatus);
         $em->flush();
-
-        // $this->addProductImages($product, $productData);
-
-    }
-
-
-    public function addProductImages($product, $productData)
-    {
-        $shops = Shop::getShops(true, null, true);
-        // Aggiungi le immagini
-        $img_counter = 0;
-        foreach ($productData['variants'][0]['variant_images'] as $img) {
-            $image = new Image();
-            $image->id_product = $product->id;
-            $image->position = Image::getHighestPosition($product->id) + 1;
-            $image->cover = ($img_counter == 0) ? true : false;
-            if (($image->validateFields(false, true)) === true && ($image->validateFieldsLang(false, true)) === true && $image->add()) {
-                $image->associateTo($shops);
-                if (!$this->uploadImage($product->id, $image->id, $img['url'])) {
-                    $image->delete();
-                }
-            }
-            $img_counter++;
-        }
-    }
-
-    function uploadImage($id_entity, $id_image = null, $imgUrl)
-    {
-        $tmpfile = tempnam(_PS_TMP_IMG_DIR_, 'ps_import');
-        $watermark_types = explode(',', Configuration::get('WATERMARK_TYPES'));
-        $image_obj = new Image((int)$id_image);
-        $path = $image_obj->getPathForCreation();
-        $imgUrl = str_replace(' ', '%20', trim($imgUrl));
-        // Evaluate the memory required to resize the image: if it's too big we can't resize it.
-        if (!ImageManager::checkImageMemoryLimit($imgUrl)) {
-            return false;
-        }
-        if (@copy($imgUrl, $tmpfile)) {
-            ImageManager::resize($tmpfile, $path . '.jpg');
-            $images_types = ImageType::getImagesTypes('products');
-            foreach ($images_types as $image_type) {
-                ImageManager::resize($tmpfile, $path . '-' . stripslashes($image_type['name']) . '.jpg', $image_type['width'], $image_type['height']);
-                if (in_array($image_type['id_image_type'], $watermark_types)) {
-                    Hook::exec('actionWatermark', array('id_image' => $id_image, 'id_product' => $id_entity));
-                }
-            }
-        } else {
-            unlink($tmpfile);
-            return false;
-        }
-        unlink($tmpfile);
-        return true;
     }
 
 
