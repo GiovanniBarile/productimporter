@@ -6,21 +6,19 @@ use Category;
 use Configuration;
 use Db;
 use Exception;
-use Hook;
-use Image;
-use ImageManager;
-use ImageType;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Product;
 use ProductImporter\Entity\CategoryMapping;
 use ProductImporter\Entity\ImportStatus;
 use ProductImporter\Entity\RemoteCategories;
 use ProductImporter\Forms\ConfigType;
-use Shop;
 use Symfony\Component\HttpFoundation\Request;
 
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class ProductImporterController extends FrameworkBundleAdminController
+
 {
     public function indexAction()
     {
@@ -126,6 +124,7 @@ class ProductImporterController extends FrameworkBundleAdminController
             $response = curl_exec($ch);
             curl_close($ch);
             $response = json_decode($response, true);
+
             $em = $this->getDoctrine()->getManager();
             //do it 3 times 
             $counter = 0;
@@ -353,76 +352,79 @@ class ProductImporterController extends FrameworkBundleAdminController
     }
 
 
+
     public function importProductsAction(Request $request)
     {
+        $total_imported_products = 0;
+
+        $connection = new AMQPStreamConnection('dog-01.lmq.cloudamqp.com', 5672, 'jqlfytoc', '2v7Sl8yCuVrQ-aDkh5geClDNHpbFQnSl', 'jqlfytoc');
+        $channel = $connection->channel();
+
         $api_key = $this->getConfig('european_resource_api_key');
         $url = 'https://product-api.europeansourcing.com/api/v1.1/search/scroll';
-        $input = '{
-            "lang": "it",
-            "limit": 100,
-            "search_handlers": [
-                ]
-        }';
-        $ch = curl_init();
+        $input = '{"lang": "it","search_handlers": []}';
 
-        // configure request with the API url,
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-        // Content-type, accept type, your token,
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/ld+json',
-            'Accept: application/ld+json',
-            'X-AUTH-TOKEN: ' . $api_key,
-        ));
-
-        // the request method (POST for the europeansourcing API),
-        curl_setopt($ch, CURLOPT_POST, 1);
-
-        // and the parameters to pass as POST
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
-
-        // Now, execute the request. $response contains the output JSON
-        $response = curl_exec($ch);
-
-        if (false === $response) {
-            echo 'Curl error: ' . curl_error($ch);
-            die();
-        }
-
-        // close connection
-        curl_close($ch);
-
-        $response = json_decode($response, true);
-        $products = $response['products'];
-        $counter = 0;
-
-        foreach ($products as $product) {
-            if ($counter == 5) {
-                break;
-            }
-            $this->importProduct($product);
-            $counter++;
-        }
-
-
-
-        try{
-
-            $this->dispatchHook('completeProductImportProcess', array(
-                'products' => $products,
-            ));
-            
-
-        }
-        catch(Exception $e){
-            echo $e->getMessage();
-            die(); 
-        }
-
-        // trigger hook to import product photos        registerHook('completeProductImportProcess')){
+        $scrollId = $this->getConfig('scroll_id') ?? null;
+        // dump($scrollId);
+        // die(); 
+        $scrollId == 0 ? $scrollId = null : $scrollId = $scrollId;
         
+        $i = 1;
 
+        do {
+            // If it's not the first iteration, set the scroll_id parameter
+            if ($scrollId !== null) {
+                $input = json_encode(['scroll_id' => $scrollId]);
+            }
+
+            // Make the API request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/ld+json',
+                'Accept: application/ld+json',
+                'X-AUTH-TOKEN: ' . $api_key,
+            ));
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
+
+            $response = curl_exec($ch);
+
+            if (false === $response) {
+                echo 'Curl error: ' . curl_error($ch);
+                die();
+            }
+
+            curl_close($ch);
+
+            // Decode the response
+            $response = json_decode($response, true);
+
+            // Check if there are products in the response
+            $products = $response['products'];
+            if (count($products) > 0) {
+
+                // Process products
+                $this->processProducts($products, $channel);
+                $total_imported_products += count($products);
+                // Get the scroll_id for the next iteration
+                $scrollId = $response['pagination']['scroll_id'];
+            }
+
+            // Increment page counter
+            ++$i;
+
+            // Save the scroll_id for the next iteration
+            $this->saveConfig('scroll_id', $scrollId);
+
+        } while (count($products) > 0 && $total_imported_products < 1500 );
+
+        $channel->close();
+        $connection->close();
+
+        // set scroll_id to 0
+        $this->saveConfig('scroll_id', 0);
 
         return $this->json([
             'success' => true,
@@ -430,8 +432,31 @@ class ProductImporterController extends FrameworkBundleAdminController
         ]);
     }
 
+    private function processProducts($products, $channel)
+    {
+        foreach ($products as $product) {
+            try {
+                $this->importProduct($product, $channel);
+            } catch (Exception $e) {
+                dump($e);
+            }
+        }
+    }
 
-    public function importProduct($productData)
+    public function removeKeysRecursive(&$array, $keys_to_remove)
+    {
+        foreach ($array as $key => &$value) {
+            if (in_array($key, $keys_to_remove)) {
+                unset($array[$key]);
+            } else {
+                if (is_array($value)) {
+                    $this->removeKeysRecursive($value, $keys_to_remove);
+                }
+            }
+        }
+    }
+
+    public function importProduct($productData, $channel)
     {
 
         //check if product is already imported
@@ -441,40 +466,28 @@ class ProductImporterController extends FrameworkBundleAdminController
             return;
         }
 
-        // Crea una nuova istanza di Product
-        $product = new Product();
+        //send product to queue
 
-        // Imposta le proprietà del prodotto
-        $product->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['name']);
-        $product->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['slug']);
-        // Imposta le dimensioni
-        $product->width = $productData['variants'][0]['variant_sizes']['width'] ?? null;
-        $product->height = $productData['variants'][0]['variant_sizes']['height'] ?? null;
-        $product->depth = $productData['variants'][0]['variant_sizes']['length'] ?? null;
+        // remove labels, extremum_price, supplier, project, keywords, supplier_profiles, variant_packaging, variant_minimum_quantities
+        //variant_sample_prices, variant_external_links, variant_list_prices, variant_delivery_times
+        //and brand from productData
 
-        // Imposta la descrizione
-        $product->description = array(intval(Configuration::get('PS_LANG_DEFAULT')) =>   $productData['variants'][0]['raw_description']);
+        //search inside product_data and its children for the keys to remove
+        $keys_to_remove = ['labels', 'extremum_price', 'supplier', 'project', 'keywords', 'supplier_profiles','supplier_profile', 'variant_packaging', 'variant_minimum_quantities', 'variant_sample_prices', 'variant_external_links', 'variant_list_prices', 'variant_delivery_times', 'brand', 'hierarchy'];
 
-        // Imposta il peso
-        $product->weight = isset($productData['variants'][0]['weight']) ? $productData['variants'][0]['weight'] : 0;
+    
+        $this->removeKeysRecursive($productData, $keys_to_remove);
 
-        // Imposta il prezzo
-        $product->price =  isset($productData['variants'][0]['variant_prices'][0]['value']) ? $productData['variants'][0]['variant_prices'][0]['value'] : 0;
+        $categories = $this->returnCategories($productData);
 
-        //imposta la quantità
-        $product->quantity = isset($productData['variants'][0]['stock']) ? $productData['variants'][0]['stock'] : 100;
+        $productData['mapped_categories'] = $categories;
 
-        //imposta quantità minimi e massimi
-
-        //Aggiungi le immagini
-
-        // Salva il prodotto
-        $product->add();
-
-        $this->handleCategories($product, $productData);
+        $msg = new AMQPMessage(json_encode($productData));
+        $channel->basic_publish($msg, '', 'products_queue');
+        
+        //after sending the product to the queue, add the product to the import_status table
         $importStatus = new ImportStatus();
-
-        $importStatus->setProductId($product->id);
+        $importStatus->setProductId($productData['id']);
         $importStatus->setOriginalProductId($productData['id']);
         $importStatus->setPhotoImported(0);
         $importStatus->setAttributesImported(0);
@@ -483,6 +496,63 @@ class ProductImporterController extends FrameworkBundleAdminController
         $em = $this->getDoctrine()->getManager();
         $em->persist($importStatus);
         $em->flush();
+
+
+
+
+        // // Crea una nuova istanza di Product
+        // $product = new Product();
+
+        // // Imposta le proprietà del prodotto
+        // $product->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['name']);
+        // $product->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $productData['variants'][0]['slug']);
+        // // Imposta le dimensioni
+        // $product->width = $productData['variants'][0]['variant_sizes']['width'] ?? null;
+        // $product->height = $productData['variants'][0]['variant_sizes']['height'] ?? null;
+        // $product->depth = $productData['variants'][0]['variant_sizes']['length'] ?? null;
+
+        // // Imposta la descrizione
+        // $product->description = array(intval(Configuration::get('PS_LANG_DEFAULT')) =>   $productData['variants'][0]['raw_description'] ?? "");
+
+        // // Imposta il peso
+        // $product->weight = isset($productData['variants'][0]['weight']) ? $productData['variants'][0]['weight'] : 0;
+
+        // // Imposta il prezzo
+        // $product->price =  isset($productData['variants'][0]['variant_prices'][0]['value']) ? $productData['variants'][0]['variant_prices'][0]['value'] : 0;
+
+        // //imposta la quantità
+        // $product->quantity = isset($productData['variants'][0]['stock']) ? $productData['variants'][0]['stock'] : 100;
+
+        // //imposta quantità minimi e massimi
+
+        // //Aggiungi le immagini
+
+        // // Salva il prodotto
+        // $product->add();
+
+        // // add product to queue
+        // $productQueue = [
+        //     'id' => $product->id,
+        //     'images' => $productData['variants'][0]['variant_images'],
+        // ];
+
+        // $msg = new AMQPMessage(json_encode($productQueue));
+        // $channel->basic_publish($msg, '', 'product_images');
+
+        // $this->handleCategories($product, $productData);
+        // $importStatus = new ImportStatus();
+
+        // $importStatus->setProductId($product->id);
+        // $importStatus->setOriginalProductId($productData['id']);
+        // $importStatus->setPhotoImported(0);
+        // $importStatus->setAttributesImported(0);
+        // $importStatus->setStatus('pending');
+        // $importStatus->setTimestamp(date('Y-m-d H:i:s'));
+        // $em = $this->getDoctrine()->getManager();
+        // $em->persist($importStatus);
+        // $em->flush();
+
+
     }
 
 
@@ -498,5 +568,23 @@ class ProductImporterController extends FrameworkBundleAdminController
                 $product->addToCategories($category->id);
             }
         }
+    }
+
+
+    function returnCategories($productData)
+    {
+        $categories_to_return = [];
+        $categories = $productData['categories'];
+        $em = $this->getDoctrine()->getManager();
+        foreach ($categories as $category) {
+            $categoryMapping = $em->getRepository(CategoryMapping::class)->findOneBy(['idRemoteCategory' => $category['id']]);
+            // dd($category, $categoryMapping);
+            if ($categoryMapping) {
+                $category = new Category($categoryMapping->getIdLocalCategory());
+                $categories_to_return[] = $category->id;
+            }
+        }
+
+        return $categories_to_return;
     }
 }

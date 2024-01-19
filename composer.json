@@ -9,5 +9,8 @@
     "config": {
         "prepend-autoloader": false
     },
-    "type": "prestashop-module"
+    "type": "prestashop-module",
+    "require": {
+        "php-amqplib/php-amqplib": "^3.6"
+    }
 }

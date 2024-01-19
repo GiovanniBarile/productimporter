@@ -77,10 +77,6 @@ class ProductImporter extends Module
             return false;
         }
 
-        if (!$this->registerHook('completeProductImportProcess')) {
-            return false;
-        }
-
         if (!$this->registerHook('actionProductDelete')) {
             return false;
         }
@@ -92,9 +88,31 @@ class ProductImporter extends Module
     //Delete product from import_status table when product is deleted
     public function hookActionProductDelete($params)
     {
-        $product_id = $params['id_product'];
-        $sql = "DELETE FROM `" . _DB_PREFIX_ . "import_status` WHERE product_id = $product_id";
+        // $product_id = $params['id_product'];
+        // $sql = "DELETE FROM `" . _DB_PREFIX_ . "import_status` WHERE product_id = $product_id";
+        // Db::getInstance()->execute($sql);
+
+        // delete ALL products from prestashop
+        $sql = "DELETE FROM `" . _DB_PREFIX_ . "product`";
         Db::getInstance()->execute($sql);
+
+        // delete ALL product images from prestashop
+        $sql = "DELETE FROM `" . _DB_PREFIX_ . "image`";
+        Db::getInstance()->execute($sql);
+
+        // delete ALL product attributes from prestashop
+        $sql = "DELETE FROM `" . _DB_PREFIX_ . "product_attribute`";
+
+        Db::getInstance()->execute($sql);
+
+        // delete ALL product attributes from prestashop
+
+        $sql = "DELETE FROM `" . _DB_PREFIX_ . "product_attribute_combination`";
+
+        Db::getInstance()->execute($sql);
+        
+
+
     }
 
     public function hookCompleteProductImportProcess($params)
@@ -115,15 +133,15 @@ class ProductImporter extends Module
         // do this in blocks of 10 products at a time 
 
 
-        while ($products = Db::getInstance()->executeS("SELECT * FROM `" . _DB_PREFIX_ . "import_status` WHERE photo_imported = 0 LIMIT 10")) {
-            foreach ($products as $product) {
-                $product_id = $product['product_id'];
-                // $original_product_id = $product['original_product_id'];
-                $product_photo = $this->getProductPhoto($original_product_id);
-                $this->addProductImages($product_id, $product_photo);
-                $this->updateImportStatus($product_id, 'photo_imported');
-            }
-        }
+        // while ($products = Db::getInstance()->executeS("SELECT * FROM `" . _DB_PREFIX_ . "import_status` WHERE photo_imported = 0 LIMIT 10")) {
+        //     foreach ($products as $product) {
+        //         $product_id = $product['product_id'];
+        //         // $original_product_id = $product['original_product_id'];
+        //         $product_photo = $this->getProductPhoto($original_product_id);
+        //         $this->addProductImages($product_id, $product_photo);
+        //         $this->updateImportStatus($product_id, 'photo_imported');
+        //     }
+        // }
     }
 
     function uploadImage($id_entity, $id_image = null, $imgUrl)
