@@ -1,84 +1,38 @@
 {% extends "@PrestaShop/Admin/layout.html.twig" %}
 
 {% block content %}
-		<div class="d-flex justify-content-center mb-3 flex-column col-1">
-			<h1 class="m-0 p-0">Sync</h1>
-			<button type="button" class="btn btn-danger" id="syncButton" data-sync-url="{{ path('productimporter-categories-sync') }}">
-				<i class="material-icons">sync</i>
-			</button>
-			</div>
-	<div class="d-flex justify-content-between" id="categoriesPage" 
-	data-unlink-category-url="{{ path('productimporter-categories-unlink') }}"	>
-
-
+	<div class="d-flex justify-content-center mb-3 flex-column col-1">
+		<h1 class="m-0 p-0">Sync</h1>
+		<button type="button" class="btn btn-danger" id="syncButton" data-sync-url="{{ path('productimporter-categories-sync') }}">
+			<i class="material-icons">sync</i>
+		</button>
+	</div>
+	<div class="d-flex justify-content-between" id="categoriesPage" data-unlink-category-url="{{ path('productimporter-categories-unlink') }}">
 
 
 		<div class="w-50 overflow-auto pr-2">
-				<input type="textarea" class="form-control" id="remoteLinkedCategories" readonly>
+			<input type="textarea" class="form-control" id="remoteLinkedCategories" readonly>
 			<div class="d-flex justify-content-between mb-3 flex-column mt-4">
 				<h1 class="m-0 p-0">Remote Categories</h1>
 			</div>
 			{# productimporter-get-remote-category-tree #}
-			<div id="remote" data-remote-url="{{path('productimporter-get-remote-category-tree')}}" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}">
-			</div>
+			<div id="remote" data-remote-url="{{path('productimporter-get-remote-category-tree')}}" data-get-remote-mapped-categories-url="{{ path('productimporter-get-remote-mapped-categories') }}"></div>
 		</div>
 
 		<div class="w-50 overflow-auto pl-2">
 
-        <div class="d-flex justify-content-between mb-3 flex-column">
-            <input type="textarea" class="form-control" id="localLinkedCategories" readonly>
-            <div class="d-flex justify-content-between mt-4">
-                <h1 class="m-0 p-0">Local Categories</h1>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal">
-                    <i class="material-icons">add</i>
-                </button>
-            </div>
-        </div>
-
-
-			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}"
-				data-local-url="{{ path('productimporter-get-local-category-tree') }}"
-			>
-				{# <ul>
-					{% for localCategory in categories %}
-						<li data-jstree='{"opened": true}' data-category-id="{{ localCategory.id_category }}" data-mapped="{{ localCategory.x_mapped }}" data-source="local">
-							{{ localCategory.name }}
-							{{ localCategory.x_mapped ? '✔️' : '' }}
-							{% if localCategory.children is defined and localCategory.children|length > 0 %}
-								<ul>
-									{% for localChildCategory in localCategory.children %}
-										<li id="{{localChildCategory.id_category}}"data-category-id="{{ localChildCategory.id_category }}"  data-mapped="{{ localChildCategory.x_mapped }}" data-source="local">
-											{{ localChildCategory.name }}
-											{{ localChildCategory.x_mapped ? '✔️' : '' }}
-											{% if localChildCategory.children is defined and localChildCategory.children|length > 0 %}
-												<ul>
-													{% for localChild2 in localChildCategory.children %}
-														<li id="{{localChild2.id_category}}" data-category-id="{{ localChild2.id_category }}" data-mapped="{{ localChild2.x_mapped }}" data-source="local">
-															{{ localChild2.name }}
-															{{ localChild2.x_mapped ? '✔️' : '' }}
-															{% if localChild2.children is defined and localChild2.children|length > 0 %}
-
-															<ul>
-																{% for localChild3 in localChild2.children %}
-																	<li id="{{localChild3.id_category}}" data-category-id="{{ localChild3.id_category }}" data-mapped="{{ localChild3.x_mapped }}" data-source="local">
-																		{{ localChild3.name }}
-																		{{ localChild3.x_mapped ? '✔️' : '' }}
-																	</li>
-																{% endfor %}
-															</ul>
-															{% endif %}
-														</li>
-													{% endfor %}
-												</ul>
-											{% endif %}
-										</li>
-									{% endfor %}
-								</ul>
-							{% endif %}
-						</li>
-					{% endfor %}
-				</ul> #}
+			<div class="d-flex justify-content-between mb-3 flex-column">
+				<input type="textarea" class="form-control" id="localLinkedCategories" readonly>
+				<div class="d-flex justify-content-between mt-4">
+					<h1 class="m-0 p-0">Local Categories</h1>
+					<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal">
+						<i class="material-icons">add</i>
+					</button>
+				</div>
 			</div>
+
+
+			<div id="local" class="demo" data-get-local-mapped-categories-url="{{ path('productimporter-get-local-mapped-categories') }}" data-delete-category-url="{{ path('productimporter-categories-delete') }}" data-local-url="{{ path('productimporter-get-local-category-tree') }}"></div>
 		</div>
 	</div>
 

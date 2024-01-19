@@ -36,7 +36,8 @@
 													<option value="{{ remoteChildCategory.original_id }}" style="font-weight:bold; color:blue">-- {{ remoteChildCategory.name }}</option>
 													{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
 														{% for remoteChild2 in remoteChildCategory.x_children %}
-															<option value="{{ remoteChild2.original_id }}" style="color:grey">---- {{ remoteChild2.name }}</option>
+															<option value="{{ remoteChild2.original_id }}" style="color:grey">---- {{ remoteChild2.name }} ({{ remoteChildCategory.name}})
+															</option>
 														{% endfor %}
 													{% endif %}
 												{% endfor %}

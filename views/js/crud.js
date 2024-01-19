@@ -16,6 +16,10 @@ $(document).ready(function () {
     });
 
     $('#addCategoryModal').on('hidden.bs.modal', function () {
+        // clear form
+        $(this).find('form').trigger('reset');
+        // Reset selectpicker
+        $(this).find('.selectpicker').selectpicker('val', '');
         $(this).removeData('bs.modal');
     }
     );
