@@ -21,7 +21,7 @@ class CategoryActionsController extends FrameworkBundleAdminController
         try {
 
             $sql = "SELECT id_remote_category FROM ps_category_mapping WHERE id_local_category = $local_category_id";
-
+            // dd($sql);
             $result = Db::getInstance()->executeS($sql);
 
             //create array of remote category ids 
@@ -120,14 +120,42 @@ class CategoryActionsController extends FrameworkBundleAdminController
             //if type is locale, $request->selectedCategory will be the id of the local one, otherwise it will be the id of the remote one
             $selectedLocalCategoryIds = $selectedCategory;
             $selectedRemoteCategoryIds = $selectedCategories;
-        } else {
+        } elseif ($link_type == 'remota') {
             $selectedLocalCategoryIds = $selectedCategories;
             $selectedRemoteCategoryIds = [$selectedCategory];
 
+            //check if remote category has children, in remote_categories table
+            $sql = "SELECT original_id FROM ps_remote_categories WHERE parent_id = $selectedCategory";
+            $result = Db::getInstance()->executeS($sql);
+
+            //if it has children, check if they are mapped to local categories
+            if ($result) {
+                foreach ($result as $row) {
+                    $remote_category_id = $row['original_id'];
+                    $sql = "SELECT id_local_category FROM ps_category_mapping WHERE id_remote_category = $remote_category_id";
+                    $result = Db::getInstance()->executeS($sql);
+                    //if they are not already mapped, map them to the same local categories as the parent
+                    if (!$result) {
+                        foreach ($selectedLocalCategoryIds as $localCategory) {
+                            $existingMapping = $em->getRepository(CategoryMapping::class)->findOneBy([
+                                'idLocalCategory' => $localCategory,
+                                'idRemoteCategory' => $remote_category_id,
+                            ]);
+                            // If local category is already mapped to remote category, delete the mapping
+                            if (!$existingMapping) {
+                                // If it doesn't exist, create and persist the mapping
+                                $categoryMapping = new CategoryMapping();
+                                $categoryMapping->setIdLocalCategory($localCategory);
+                                $categoryMapping->setIdRemoteCategory($remote_category_id);
+                                $em->persist($categoryMapping);
+                            }
+                        }
+                    }
+                }
+            }
 
         }
-
-        // Verifica se il collegamento esiste già
+        // Check if local category is already mapped to remote category
         $existingMapping = $em->getRepository(CategoryMapping::class)->findBy([
             'idLocalCategory' => $selectedLocalCategoryIds[0],
         ]);
@@ -140,7 +168,8 @@ class CategoryActionsController extends FrameworkBundleAdminController
             }
             $em->flush();
         }
-        is_string($selectedLocalCategoryIds) ? $selectedLocalCategoryIds = [$selectedLocalCategoryIds] : null;
+        //if it's comma separated string, turn it into an array
+        is_string($selectedLocalCategoryIds) ? $selectedLocalCategoryIds = explode(',', $selectedLocalCategoryIds) : null;
         
         foreach ($selectedLocalCategoryIds as $localCategory) {
             foreach ($selectedRemoteCategoryIds as $remoteCategory) {

@@ -3,8 +3,10 @@
 	<div class="modal fade" id="linkCategoryModal" tabindex="-1" role="dialog" aria-hidden="true"
 	data-link-categories-url="{{ path('productimporter-categories-link')}}"
 	data-category-type=""
-	data-category-id=""
 	>
+	<input type="hidden" id="categoryType" value="">
+	<input type="hidden" id="categoryIds" value="">
+
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -28,13 +30,14 @@
 
 								<select data-width="75%" class="selectpicker" name="linkCategory" multiple data-live-search="true" data-actions-box="true" id="remoteSelectPicker">
 									{% for remoteCategory in remote_categories %}
-										<option value="{{ remoteCategory.id }}" style="font-weight:bold; color:green">[+] {{ remoteCategory.name }}</option>
+										<option value="{{ remoteCategory.original_id }}" style="font-weight:bold; color:green">[+] {{ remoteCategory.name }}</option>
 											{% if remoteCategory.x_children is defined and remoteCategory.x_children|length > 0 %}
 												{% for remoteChildCategory in remoteCategory.x_children %}
-													<option value="{{ remoteChildCategory.id }}" style="font-weight:bold; color:blue">-- {{ remoteChildCategory.name }}</option>
+													<option value="{{ remoteChildCategory.original_id }}" style="font-weight:bold; color:blue">-- {{ remoteChildCategory.name }}</option>
 													{% if remoteChildCategory.x_children is defined and remoteChildCategory.x_children|length > 0 %}
 														{% for remoteChild2 in remoteChildCategory.x_children %}
-															<option value="{{ remoteChild2.id }}" style="color:grey">---- {{ remoteChild2.name }}</option>
+															<option value="{{ remoteChild2.original_id }}" style="color:grey">---- {{ remoteChild2.name }} ({{ remoteChildCategory.name}})
+															</option>
 														{% endfor %}
 													{% endif %}
 												{% endfor %}

@@ -5,14 +5,20 @@ namespace ProductImporter\Controller;
 use Category;
 use Configuration;
 use Db;
+use Exception;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use Product;
 use ProductImporter\Entity\CategoryMapping;
+use ProductImporter\Entity\ImportStatus;
 use ProductImporter\Entity\RemoteCategories;
 use ProductImporter\Forms\ConfigType;
 use Symfony\Component\HttpFoundation\Request;
 
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class ProductImporterController extends FrameworkBundleAdminController
+
 {
     public function indexAction()
     {
@@ -63,6 +69,11 @@ class ProductImporterController extends FrameworkBundleAdminController
         function markMappedCategories(&$categories, $mapped_local_categories)
         {
             foreach ($categories as &$category) {
+                // sort categories by name
+                // usort($categories, function ($a, $b) {
+                //     return $a['name'] <=> $b['name'];
+                // });
+
                 $category['x_mapped'] = in_array($category['id_category'], $mapped_local_categories);
                 if (isset($category['children'])) {
                     markMappedCategories($category['children'], $mapped_local_categories);
@@ -76,13 +87,18 @@ class ProductImporterController extends FrameworkBundleAdminController
         markMappedCategories($existing_categories, $mapped_local_categories);
 
 
+        // dd($existing_categories);
         return $this->render('@Modules/productimporter/templates/admin/categories.html.twig', [
             'categories' => $existing_categories,
             'remote_categories' => $remote_categories,
         ]);
     }
 
+    public function importProductsPageAction()
+    {
 
+        return $this->render('@Modules/productimporter/templates/admin/import_products.html.twig');
+    }
 
 
     public function getRemoteCategories()
@@ -114,6 +130,7 @@ class ProductImporterController extends FrameworkBundleAdminController
             $response = curl_exec($ch);
             curl_close($ch);
             $response = json_decode($response, true);
+
             $em = $this->getDoctrine()->getManager();
             //do it 3 times 
             $counter = 0;
@@ -152,7 +169,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         //foreach category, if parent_id == null, add it to the ordered_categories array
         foreach ($categories as $category) {
             if ($category['parent_id'] == null) {
-                if (in_array($category['id'], $mapped_local_categories)) {
+                if (in_array($category['original_id'], $mapped_local_categories)) {
                     $category['x_mapped'] = true;
                 } else {
                     $category['x_mapped'] = false;
@@ -165,7 +182,7 @@ class ProductImporterController extends FrameworkBundleAdminController
         foreach ($ordered_categories as &$ordered_category) {
             foreach ($categories as $category) {
                 if ($category['parent_id'] == $ordered_category['original_id']) {
-                    if (in_array($category['id'], $mapped_local_categories)) {
+                    if (in_array($category['original_id'], $mapped_local_categories)) {
                         $category['x_mapped'] = true;
                     } else {
                         $category['x_mapped'] = false;
@@ -178,7 +195,7 @@ class ProductImporterController extends FrameworkBundleAdminController
                 foreach ($ordered_category['x_children'] as &$child) {
                     foreach ($categories as $category) {
                         if ($category['parent_id'] == $child['original_id']) {
-                            if (in_array($category['id'], $mapped_local_categories)) {
+                            if (in_array($category['original_id'], $mapped_local_categories)) {
                                 $category['x_mapped'] = true;
                             } else {
                                 $category['x_mapped'] = false;
@@ -260,42 +277,6 @@ class ProductImporterController extends FrameworkBundleAdminController
     public function categoriesActionSync(Request $request)
     {
 
-        $l_categories = Category::getCategories(intval(Configuration::get('PS_LANG_DEFAULT')), true, false);
-$localCategorySlugs = array_map(function ($category) {
-    return pSQL($category['link_rewrite']);
-}, $l_categories);
-
-$remoteCategories = array();
-if (!empty($localCategorySlugs)) {
-    $sql = "SELECT * FROM ps_remote_categories WHERE slug IN ('" . implode("','", $localCategorySlugs) . "')";
-    $remoteCategories = Db::getInstance()->executeS($sql);
-}
-
-foreach ($l_categories as $l_category) {
-    $localCategoryId = (int) $l_category['id_category'];
-    $localCategorySlug = pSQL($l_category['link_rewrite']);
-
-    foreach ($remoteCategories as $remoteCategory) {
-        if ($remoteCategory['slug'] === $localCategorySlug) {
-            $remoteCategoryId = (int) $remoteCategory['id'];
-
-            $sql = "SELECT * FROM ps_category_mapping WHERE id_local_category = {$localCategoryId} AND id_remote_category = {$remoteCategoryId}";
-            $mapping = Db::getInstance()->executeS($sql);
-
-            if (!$mapping) {
-                $sql = "INSERT INTO ps_category_mapping (id_local_category, id_remote_category) VALUES ({$localCategoryId}, {$remoteCategoryId})";
-                Db::getInstance()->execute($sql);
-            }
-
-
-        }
-    }
-    }
-    return $this->json([
-        'success' => true,
-        'message' => 'Categories synced successfully',
-    ]);
-    
 
         //remove all the categories from the database, except the root and home categories
         $sql = "DELETE FROM ps_category WHERE id_category > 2";
@@ -319,12 +300,15 @@ foreach ($l_categories as $l_category) {
 
     public function syncCategory($remoteCategory, $parentId = 2)
     {
+        //Create the local category based on the remote category and map it to the remote category 
         $category = new Category();
 
         $category->name = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['name']);
         $category->id_parent = $parentId;
         $category->link_rewrite = array(intval(Configuration::get('PS_LANG_DEFAULT')) => $remoteCategory['slug']);
         $category->active = 1;
+
+
 
         if ($category->add()) {
             $categoryId = $category->id;
@@ -339,5 +323,194 @@ foreach ($l_categories as $l_category) {
         // Aggiorna la categoria appena creata, in modo da poter avere l'ID corretto
         $category = new Category($categoryId);
         $category->update();
+
+        // Map the local category to the remote category
+        $mapping = new CategoryMapping();
+        $mapping->setIdLocalCategory($categoryId);
+        $mapping->setIdRemoteCategory($remoteCategory['original_id']);
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($mapping);
+        $em->flush();
+    }
+
+
+
+    public function importProductsAction(Request $request)
+    {
+        $total_imported_products = 0;
+
+        $connection = new AMQPStreamConnection('dog-01.lmq.cloudamqp.com', 5672, 'jqlfytoc', '2v7Sl8yCuVrQ-aDkh5geClDNHpbFQnSl', 'jqlfytoc');
+        $channel = $connection->channel();
+
+        $api_key = $this->getConfig('european_resource_api_key');
+        $url = 'https://product-api.europeansourcing.com/api/v1.1/search/scroll';
+        $input = '{"lang": "it","search_handlers": []}';
+
+        $scrollId = $this->getConfig('scroll_id') ?? null;
+        // dump($scrollId);
+        // die(); 
+        $scrollId == 0 ? $scrollId = null : $scrollId = $scrollId;
+
+        $i = 1;
+
+        do {
+            // If it's not the first iteration, set the scroll_id parameter
+            if ($scrollId !== null) {
+                $input = json_encode(['scroll_id' => $scrollId]);
+            }
+
+            // Make the API request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/ld+json',
+                'Accept: application/ld+json',
+                'X-AUTH-TOKEN: ' . $api_key,
+            ));
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
+
+            $response = curl_exec($ch);
+
+            if (false === $response) {
+                echo 'Curl error: ' . curl_error($ch);
+                die();
+            }
+
+            curl_close($ch);
+
+            // Decode the response
+            $response = json_decode($response, true);
+
+            // Check if there are products in the response
+            $products = $response['products'];
+            if (count($products) > 0) {
+
+                // Process products
+                $this->processProducts($products, $channel);
+                $total_imported_products += count($products);
+                // Get the scroll_id for the next iteration
+                $scrollId = $response['pagination']['scroll_id'];
+            }
+
+            // Increment page counter
+            ++$i;
+
+            // Save the scroll_id for the next iteration
+            $this->saveConfig('scroll_id', $scrollId);
+        } while (count($products) > 0 && $total_imported_products < 1500);
+
+        $channel->close();
+        $connection->close();
+
+        // set scroll_id to 0
+        $this->saveConfig('scroll_id', 0);
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Products imported successfully',
+        ]);
+    }
+
+    private function processProducts($products, $channel)
+    {
+        foreach ($products as $product) {
+            try {
+                $this->importProduct($product, $channel);
+            } catch (Exception $e) {
+                dump($e);
+            }
+        }
+    }
+
+    public function removeKeysRecursive(&$array, $keys_to_remove)
+    {
+        foreach ($array as $key => &$value) {
+            if (in_array($key, $keys_to_remove)) {
+                unset($array[$key]);
+            } else {
+                if (is_array($value)) {
+                    $this->removeKeysRecursive($value, $keys_to_remove);
+                }
+            }
+        }
+    }
+
+    public function importProduct($productData, $channel)
+    {
+
+        //check if product is already imported
+        $sql = "SELECT * FROM ps_import_status WHERE original_product_id = {$productData['id']}";
+        $result = Db::getInstance()->executeS($sql);
+        if ($result) {
+            return;
+        }
+
+        //send product to queue
+
+        // remove labels, extremum_price, supplier, project, keywords, supplier_profiles, variant_packaging, variant_minimum_quantities
+        //variant_sample_prices, variant_external_links, variant_list_prices, variant_delivery_times
+        //and brand from productData
+
+        //search inside product_data and its children for the keys to remove
+        $keys_to_remove = ['labels', 'extremum_price', 'supplier', 'project', 'keywords', 'supplier_profiles', 'supplier_profile', 'variant_packaging', 'variant_minimum_quantities', 'variant_sample_prices', 'variant_external_links', 'variant_list_prices', 'variant_delivery_times', 'brand', 'hierarchy'];
+
+
+        $this->removeKeysRecursive($productData, $keys_to_remove);
+
+        $categories = $this->returnCategories($productData);
+
+        $productData['mapped_categories'] = $categories;
+
+        $msg = new AMQPMessage(json_encode($productData));
+        $channel->basic_publish($msg, '', 'products_queue');
+
+        //after sending the product to the queue, add the product to the import_status table
+        $importStatus = new ImportStatus();
+        $importStatus->setProductId($productData['id']);
+        $importStatus->setOriginalProductId($productData['id']);
+        $importStatus->setPhotoImported(0);
+        $importStatus->setAttributesImported(0);
+        $importStatus->setStatus('pending');
+        $importStatus->setTimestamp(date('Y-m-d H:i:s'));
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($importStatus);
+        $em->flush();
+
+
+    }
+
+
+    function handleCategories($product, $productData)
+    {
+        $categories = $productData['categories'];
+        $em = $this->getDoctrine()->getManager();
+        foreach ($categories as $category) {
+            $categoryMapping = $em->getRepository(CategoryMapping::class)->findOneBy(['idRemoteCategory' => $category['id']]);
+            // dd($category, $categoryMapping);
+            if ($categoryMapping) {
+                $category = new Category($categoryMapping->getIdLocalCategory());
+                $product->addToCategories($category->id);
+            }
+        }
+    }
+
+
+    function returnCategories($productData)
+    {
+        $categories_to_return = [];
+        $categories = $productData['categories'];
+        $em = $this->getDoctrine()->getManager();
+        foreach ($categories as $category) {
+            $categoryMapping = $em->getRepository(CategoryMapping::class)->findOneBy(['idRemoteCategory' => $category['id']]);
+            // dd($category, $categoryMapping);
+            if ($categoryMapping) {
+                $category = new Category($categoryMapping->getIdLocalCategory());
+                $categories_to_return[] = $category->id;
+            }
+        }
+
+        return $categories_to_return;
     }
 }

@@ -10,16 +10,25 @@ $(document).ready(function () {
         $.post(url, formData, function (data) {
             if (data.success) {
                 $('#addCategoryModal').modal('hide');
-
-                window.location.reload();
+                $('#local').jstree(true).refresh();
             }
         });
     });
+
+    $('#addCategoryModal').on('hidden.bs.modal', function () {
+        // clear form
+        $(this).find('form').trigger('reset');
+        // Reset selectpicker
+        $(this).find('.selectpicker').selectpicker('val', '');
+        $(this).removeData('bs.modal');
+    }
+    );
 
 
 
     $('#editCategoryModal').on('show.bs.modal', function (event) {
         var modal = $(this);
+
         let saveButton = modal.find('#saveEditedCategory');
         let oldCategory = modal.find('#oldCategoryName').val();
         let categoryId = modal.find('#saveEditedCategory').data('category-id');
@@ -42,7 +51,8 @@ $(document).ready(function () {
             $.post(url, formData, function (data) {
                 if (data.success) {
                     $('#editCategoryModal').modal('hide');
-                    window.location.reload();
+                    // window.location.reload();
+                    $('#local').jstree(true).refresh();
                 }
             });
         });
